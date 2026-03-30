@@ -42,6 +42,7 @@ def bootstrapZipSize = bootstrapZipFile.exists() ? bootstrapZipFile.length() : -
  * termux-bootstrap-zip.S includes this file so changing the zip forces recompilation.
  */
 tasks.register('generateBootstrapStamp') {
+    preBuild.dependsOn tasks.named('downloadBootstrapZip')
     inputs.file(bootstrapZipFile)
     outputs.file(bootstrapStampFile)
     doLast {
@@ -366,8 +367,6 @@ task downloadBootstrapZip {
 
 preBuild.dependsOn setupOniguruma
 preBuild.dependsOn tasks.named('generateBootstrapStamp')
-preBuild.dependsOn tasks.named('downloadBootstrapZip')
-
 /**
  * If the bootstrap zip changes, we must force a rebuild of ndk-build outputs.
  * Some build setups can still reuse stale objects even when inputs change.
