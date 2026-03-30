@@ -1,0 +1,7 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Sat Jan 31 04:36:02 GMT 2026
+https\://repo.maven.apache.org/maven2/.lastUpdated=1769834162029
+@default-cbi-release-https\://repo.eclipse.org/content/repositories/cbi-releases/.lastUpdated=1769834161505
+@default-dash-licenses-snapshots-https\://repo.eclipse.org/content/repositories/dash-licenses-snapshots/.lastUpdated=1769834161916
+https\://repo.eclipse.org/content/repositories/dash-licenses-snapshots/.error=Could not transfer artifact org.apache.maven\:maven-archiver\:pom\:3.5.2 from/to dash-licenses-snapshots (https\://repo.eclipse.org/content/repositories/dash-licenses-snapshots/)\: authorization failed for https\://repo.eclipse.org/content/repositories/dash-licenses-snapshots/org/apache/maven/maven-archiver/3.5.2/maven-archiver-3.5.2.pom, status\: 403 Forbidden
+https\://repo.eclipse.org/content/repositories/cbi-releases/.error=Could not transfer artifact org.apache.maven\:maven-archiver\:pom\:3.5.2 from/to cbi-release (https\://repo.eclipse.org/content/repositories/cbi-releases/)\: authorization failed for https\://repo.eclipse.org/content/repositories/cbi-releases/org/apache/maven/maven-archiver/3.5.2/maven-archiver-3.5.2.pom, status\: 403 Forbidden

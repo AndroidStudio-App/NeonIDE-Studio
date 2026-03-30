@@ -1,0 +1,15 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:key="ide_logging"
+        app:title="Logging">
+
+        <SwitchPreferenceCompat
+            app:key="ide_file_logging_enabled"
+            app:title="Save IDE logs to Documents"
+            app:summaryOn="Writes logs to /sdcard/Documents/NeonIDE/logs/ide.log"
+            app:summaryOff="Disabled" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

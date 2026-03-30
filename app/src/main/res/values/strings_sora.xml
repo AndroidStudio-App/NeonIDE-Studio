@@ -1,0 +1,114 @@
+<resources>
+    <!-- Sora editor demo-style strings (prefixed to avoid collisions) -->
+    <string name="sora_cursor_actions">Cursor Actions</string>
+    <string name="sora_go_to_end">Go To End</string>
+    <string name="sora_move_up">Move Up</string>
+    <string name="sora_move_down">Move Down</string>
+    <string name="sora_move_left">Move Left</string>
+    <string name="sora_move_right">Move Right</string>
+    <string name="sora_home">Home</string>
+    <string name="sora_end">End</string>
+
+    <string name="sora_search_text">Search Text</string>
+    <string name="sora_action_mode">Action Mode</string>
+    <string name="sora_search_panel">Search Panel</string>
+
+    <string name="sora_feature_switches">Feature Switches</string>
+    <string name="sora_wordwrap">Wordwrap</string>
+    <string name="sora_line_number_visibility">Show line number</string>
+    <string name="sora_pin_line_number">Pin LineNumber</string>
+    <string name="sora_magnifier">Magnifier</string>
+    <string name="sora_use_icu_library">Use ICU library</string>
+    <string name="sora_open_completion_window_animation">Completion Window Animation</string>
+    <string name="sora_enable_soft_keyboard">Enable soft keyboard</string>
+    <string name="sora_hide_soft_kbd_if_hard_kbd_available">Hide soft kbd if hard kbd available</string>
+
+    <string name="sora_line_info_panel_position">Line Info Panel Position</string>
+    <string name="sora_fixed">Fixed</string>
+    <string name="sora_follow_scrollbar">Follow scrollbar</string>
+
+    <string name="sora_debug">Debug</string>
+    <string name="sora_format">Format</string>
+    <string name="sora_show_crash_log">Open crash log</string>
+    <string name="sora_clear_crash_log">Clear crash log</string>
+    <string name="sora_open_debug_document">Open debug document</string>
+    <string name="sora_open_new_activity">Open new activity</string>
+
+    <string name="sora_switch_language">Switch Language</string>
+    <string name="sora_switch_color_scheme">Switch Color Scheme</string>
+    <string name="sora_switch_typeface">Switch Typeface</string>
+
+    <string name="sora_undo">Undo</string>
+    <string name="sora_redo">Redo</string>
+
+    <!-- AndroidCodeStudio-like build actions (Sora editor toolbar) -->
+    <string name="acs_quick_run">Quick run</string>
+    <string name="acs_sync_project">Sync project</string>
+    <string name="acs_cancel_build">Cancel build</string>
+    <string name="acs_select_project_dir">Select project directory</string>
+    <string name="acs_project_dir_missing">No project directory selected. Open a project first.</string>
+    <string name="acs_gradle_wrapper_missing">Gradle wrapper not found in this project (missing gradlew or gradle/wrapper files).</string>
+    <string name="acs_gradle_wrapper_repaired">Gradle wrapper jar was missing and has been restored.</string>
+    <string name="acs_gradle_wrapper_repair_failed">Gradle wrapper jar is missing and could not be restored.</string>
+    <string name="acs_android_sdk_missing">Android SDK not found. Install it under $HOME/android-sdk or set ANDROID_HOME/ANDROID_SDK_ROOT.</string>
+    <string name="acs_build_started">Build started…</string>
+    <string name="acs_sync_started">Sync started…</string>
+    <string name="acs_build_finished">Build finished.</string>
+    <string name="acs_sync_finished">Sync finished.</string>
+    <string name="acs_build_failed">Build failed.</string>
+    <string name="acs_sync_failed">Sync failed.</string>
+    <string name="acs_save">Save</string>
+    <string name="acs_open_build_log">Open build log</string>
+    <string name="acs_saved">Saved.</string>
+    <string name="acs_save_failed">Save failed.</string>
+
+    <!-- ACS bottom sheet tabs -->
+    <string name="acs_tab_build_output">Build output</string>
+    <string name="acs_tab_app_logs">App Logs</string>
+    <string name="acs_tab_ide_logs">IDE Logs</string>
+    <string name="acs_tab_diagnostics">Diagnostics</string>
+    <string name="acs_tab_search">Search</string>
+    <string name="acs_tab_references">References</string>
+    <string name="acs_menu_go_to_definition">Go to definition</string>
+    <string name="acs_menu_find_references">Find references</string>
+    <string name="acs_bottom_sheet_ready">Ready</string>
+    <string name="acs_status_building">Building…</string>
+    <string name="acs_status_success">Finished</string>
+    <string name="acs_status_failed">Failed</string>
+    <string name="acs_status_cancelled">Cancelled</string>
+    <string name="acs_empty">Nothing here</string>
+    <string name="acs_search_hint">Search in project…</string>
+    <string name="acs_search">Search</string>
+
+    <string name="sora_text_to_search">Text to search</string>
+    <string name="sora_replacement">Replacement</string>
+    <string name="sora_prev">Prev</string>
+    <string name="sora_next">Next</string>
+    <string name="sora_rep">Rep</string>
+    <string name="sora_all">All</string>
+
+    <string name="sora_search_option_regex">Regex</string>
+    <string name="sora_search_option_whole_word">Whole Word</string>
+    <string name="sora_search_option_match_case">Match Case</string>
+
+    <string name="sora_not_supported">Not supported</string>
+    <string name="sora_dialog_api_warning_msg">LSP works only on Android O or above</string>
+    <string name="sora_dialog_lsp_entry_title">Select LSP Activity</string>
+    <string name="sora_dialog_lsp_entry_msg">Open LSP demo? (Lua language server)</string>
+    <string name="sora_choice_yes">Yes</string>
+    <string name="sora_choice_no">No</string>
+
+    <string name="sora_color_scheme">Color Scheme</string>
+    <string name="sora_deleting_log_success">Log removed.</string>
+    <string name="sora_err_crash">Unexpected exception occurred. Crash log saved to crash-journal.log.</string>
+
+    <string name="sora_top">Top</string>
+    <string name="sora_bottom">Bottom</string>
+    <string name="sora_left">Left</string>
+    <string name="sora_right">Right</string>
+    <string name="sora_center">Center</string>
+    <string name="sora_top_left">Top left</string>
+    <string name="sora_top_right">Top right</string>
+    <string name="sora_bottom_left">Bottom left</string>
+    <string name="sora_bottom_right">Bottom right</string>
+</resources>

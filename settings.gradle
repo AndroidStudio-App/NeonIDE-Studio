@@ -1,0 +1,25 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+    }
+}
+
+rootProject.name = "NeonIDE Studio"
+
+include(":app")
+// Note: We intentionally do NOT include the local `sora-editor` build here.
+// Including it would also configure/build optional native modules (like oniguruma-native)
+// which require an NDK setup that may not be available in this workspace.
+// Instead, we depend on the published artifacts from Maven Central in :app.

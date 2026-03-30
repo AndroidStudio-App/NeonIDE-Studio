@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:title="@string/sora_cursor_actions">
+        <menu>
+            <item
+                android:id="@+id/sora_goto_end"
+                android:title="@string/sora_go_to_end" />
+            <item
+                android:id="@+id/sora_move_up"
+                android:title="@string/sora_move_up" />
+            <item
+                android:id="@+id/sora_move_down"
+                android:title="@string/sora_move_down" />
+            <item
+                android:id="@+id/sora_move_left"
+                android:title="@string/sora_move_left" />
+            <item
+                android:id="@+id/sora_move_right"
+                android:title="@string/sora_move_right" />
+            <item
+                android:id="@+id/sora_home"
+                android:title="@string/sora_home" />
+            <item
+                android:id="@+id/sora_end"
+                android:title="@string/sora_end" />
+        </menu>
+    </item>
+
+    <item android:title="@string/sora_search_text">
+        <menu>
+            <item
+                android:id="@+id/sora_search_am"
+                android:title="@string/sora_action_mode" />
+            <item
+                android:id="@+id/sora_search_panel_st"
+                android:checkable="true"
+                android:title="@string/sora_search_panel" />
+        </menu>
+    </item>
+
+    <item android:title="@string/sora_feature_switches">
+        <menu>
+            <item
+                android:id="@+id/sora_text_wordwrap"
+                android:checkable="true"
+                android:title="@string/sora_wordwrap" />
+            <item
+                android:id="@+id/sora_editor_line_number"
+                android:checkable="true"
+                android:checked="true"
+                android:title="@string/sora_line_number_visibility" />
+            <item
+                android:id="@+id/sora_pin_line_number"
+                android:checkable="true"
+                android:title="@string/sora_pin_line_number" />
+            <item
+                android:id="@+id/sora_magnifier"
+                android:checkable="true"
+                android:checked="true"
+                android:title="@string/sora_magnifier" />
+            <item
+                android:id="@+id/sora_use_icu"
+                android:checkable="true"
+                android:checked="true"
+                android:title="@string/sora_use_icu_library" />
+            <item
+                android:id="@+id/sora_completion_anim"
+                android:checkable="true"
+                android:checked="true"
+                android:title="@string/sora_open_completion_window_animation" />
+            <item
+                android:id="@+id/sora_soft_kbd_enabled"
+                android:checkable="true"
+                android:checked="true"
+                android:title="@string/sora_enable_soft_keyboard" />
+            <item
+                android:id="@+id/sora_disable_soft_kbd_on_hard_kbd"
+                android:checkable="true"
+                android:checked="true"
+                android:title="@string/sora_hide_soft_kbd_if_hard_kbd_available" />
+        </menu>
+    </item>
+
+    <item android:title="@string/sora_line_info_panel_position">
+        <menu>
+            <item
+                android:id="@+id/sora_ln_panel_fixed"
+                android:title="@string/sora_fixed" />
+            <item
+                android:id="@+id/sora_ln_panel_follow"
+                android:title="@string/sora_follow_scrollbar" />
+        </menu>
+    </item>
+
+    <item android:title="@string/sora_debug">
+        <menu>
+            <item
+                android:id="@+id/sora_code_format"
+                android:title="@string/sora_format" />
+            <item
+                android:id="@+id/sora_open_build_log"
+                android:title="@string/acs_open_build_log" />
+            <item
+                android:id="@+id/sora_open_logs"
+                android:title="@string/sora_show_crash_log" />
+            <item
+                android:id="@+id/sora_clear_logs"
+                android:title="@string/sora_clear_crash_log" />
+            <item
+                android:id="@+id/sora_open_ide_file_log"
+                android:title="Open IDE file log (Documents)" />
+            <item
+                android:id="@+id/sora_load_test_file"
+                android:title="@string/sora_open_debug_document" />
+            <item
+                android:id="@+id/sora_open_test_activity"
+                android:title="@string/sora_open_new_activity" />
+            <item
+                android:id="@+id/sora_start_java_lsp"
+                android:title="Start Java LSP Server" />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/sora_switch_language"
+        android:title="@string/sora_switch_language" />
+
+    <item
+        android:id="@+id/sora_switch_colors"
+        android:title="@string/sora_switch_color_scheme" />
+
+    <item
+        android:id="@+id/sora_switch_typeface"
+        android:title="@string/sora_switch_typeface" />
+
+    <item
+        android:id="@+id/sora_text_undo"
+        android:icon="@drawable/sora_undo"
+        android:title="@string/sora_undo"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/sora_text_redo"
+        android:icon="@drawable/sora_redo"
+        android:title="@string/sora_redo"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/sora_save_file"
+        android:title="@string/acs_save"
+        android:icon="@drawable/round_save_20"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/sora_quick_run"
+        android:title="@string/acs_quick_run"
+        android:icon="@drawable/ic_run_outline"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/sora_sync_project"
+        android:title="@string/acs_sync_project"
+        android:icon="@drawable/ic_sync"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/sora_open_terminal"
+        android:title="Terminal"
+        android:icon="@drawable/ic_terminal"
+        app:showAsAction="always" />
+
+</menu>

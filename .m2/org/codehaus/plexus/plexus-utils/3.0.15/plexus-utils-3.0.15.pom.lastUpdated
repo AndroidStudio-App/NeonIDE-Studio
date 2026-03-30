@@ -1,0 +1,7 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Sat Jan 31 04:36:05 GMT 2026
+https\://repo.maven.apache.org/maven2/.lastUpdated=1769834165180
+@default-dash-licenses-snapshots-https\://repo.eclipse.org/content/repositories/dash-licenses-snapshots/.lastUpdated=1769834165073
+https\://repo.eclipse.org/content/repositories/dash-licenses-snapshots/.error=Could not transfer artifact org.codehaus.plexus\:plexus-utils\:pom\:3.0.15 from/to dash-licenses-snapshots (https\://repo.eclipse.org/content/repositories/dash-licenses-snapshots/)\: authorization failed for https\://repo.eclipse.org/content/repositories/dash-licenses-snapshots/org/codehaus/plexus/plexus-utils/3.0.15/plexus-utils-3.0.15.pom, status\: 403 Forbidden
+https\://repo.eclipse.org/content/repositories/cbi-releases/.lastUpdated=1769834164168
+https\://repo.eclipse.org/content/repositories/cbi-releases/.error=
