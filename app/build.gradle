@@ -366,6 +366,7 @@ task downloadBootstrapZip {
 }
 
 preBuild.dependsOn setupOniguruma
+preBuild.dependsOn tasks.named('downloadBootstrapZip')
 preBuild.dependsOn tasks.named('generateBootstrapStamp')
 /**
  * If the bootstrap zip changes, we must force a rebuild of ndk-build outputs.
