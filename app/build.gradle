@@ -231,27 +231,20 @@ dependencies {
     implementation "io.github.dingyi222666.regex-lib:regex-lib-oniguruma:1.0.3"
     implementation "io.github.dingyi222666.regex-lib:regex-lib-re2j:1.0.2"
 
-    // Tree-sitter bindings + languages
-    // Replaced Maven artifacts with local AARs from ./android-tree-sitter (copied into app/libs)
-    implementation(files(
-            "libs/android-tree-sitter-debug.aar",
-            "libs/tree-sitter-java-debug.aar",
-            "libs/tree-sitter-kotlin-debug.aar",
-            "libs/tree-sitter-xml-debug.aar",
-            "libs/tree-sitter-json-debug.aar",
-            "libs/tree-sitter-python-debug.aar",
-            "libs/tree-sitter-c-debug.aar",
-            "libs/tree-sitter-cpp-debug.aar",
-            "libs/tree-sitter-aidl-debug.aar",
-            "libs/tree-sitter-properties-debug.aar",
-            "libs/tree-sitter-log-debug.aar",
-            "libs/annotations.jar",
-    ))
+    // Tree-sitter bindings + languages (from Maven Central)
+    implementation "io.github.itsaky:android-tree-sitter:1.4.2"
+    implementation "io.github.itsaky:tree-sitter-java:1.4.2"
+    implementation "io.github.itsaky:tree-sitter-kotlin:1.4.2"
+    implementation "io.github.itsaky:tree-sitter-xml:1.4.2"
+    implementation "io.github.itsaky:tree-sitter-json:1.4.2"
+    implementation "io.github.itsaky:tree-sitter-python:1.4.2"
+    implementation "io.github.itsaky:tree-sitter-c:1.4.2"
+    implementation "io.github.itsaky:tree-sitter-cpp:1.4.2"
+    implementation "io.github.itsaky:tree-sitter-aidl:1.4.2"
+    implementation "io.github.itsaky:tree-sitter-properties:1.4.2"
+    implementation "io.github.itsaky:tree-sitter-log:1.4.2"
 
     // Required by android-tree-sitter (Java annotation processor generating headers).
-    // Included as a local jar to match the copied implementation.
-    // The processor depends on the annotations types at compile-time.
-    annotationProcessor files("libs/annotation-processors.jar", "libs/annotations.jar")
     annotationProcessor "com.squareup:javapoet:1.13.0"
 
     // Monarch language definitions (demo)
@@ -264,7 +257,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
 
     // Local jars for demo language server(s)
-    implementation fileTree(dir: 'libs', include: ['*.jar'], exclude: ['annotation-processors.jar', 'annotations.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 
