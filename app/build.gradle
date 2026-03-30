@@ -294,12 +294,8 @@ task setupOniguruma {
     def onigZip = new File(buildDir, 'oniguruma.zip')
     def zipRoot = 'oniguruma-6.9.10'
 
-    // Setup config.h
-    // IMPORTANT: this project vendors Oniguruma sources, so `onigDir` already exists and the task
-    // can become UP-TO-DATE even if config.h is missing. Declare config.h as an output so the task
-    // re-runs and copies the template when needed.
+    // Setup config.h for Android NDK build
     def configFile = new File(onigDir, 'src/config.h')
-    def templateFile = new File(onigDir, 'tis-ci/config.h')
 
     outputs.dir onigDir
     outputs.file configFile
@@ -327,15 +323,32 @@ task setupOniguruma {
             onigZip.delete()
         }
 
-        // Setup config.h
-        if (!configFile.exists() && templateFile.exists()) {
-            logger.quiet("Copying config.h...")
-            project.copy {
-                from templateFile
-                into configFile.parentFile
-                rename { 'config.h' }
-            }
-        }
+        // Always generate config.h for Android NDK (even if directory already exists)
+        logger.quiet("Generating config.h for Android NDK...")
+        configFile.parentFile.mkdirs()
+        configFile.text = """/* config.h for Android NDK build (arm64-v8a) */
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define HAVE_ALLOCA 1
+#define HAVE_ALLOCA_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_SYS_TIME_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_INTTYPES_H 1
+#define SIZEOF_INT 4
+#define SIZEOF_LONG 8
+#define SIZEOF_LONG_LONG 8
+#define SIZEOF_VOIDP 8
+
+/* Disable features not needed on Android */
+#undef USE_CRNL_AS_LINE_TERMINATOR
+#undef CRAY_STACKSEG_END
+#undef C_ALLOCA
+
+#endif /* CONFIG_H */
+"""
     }
 }
 
