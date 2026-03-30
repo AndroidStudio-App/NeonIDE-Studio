@@ -42,8 +42,10 @@ def bootstrapZipSize = bootstrapZipFile.exists() ? bootstrapZipFile.length() : -
  * termux-bootstrap-zip.S includes this file so changing the zip forces recompilation.
  */
 tasks.register('generateBootstrapStamp') {
-    preBuild.dependsOn tasks.named('downloadBootstrapZip')
-    inputs.file(bootstrapZipFile)
+    dependsOn tasks.named('downloadBootstrapZip')
+    
+    // Don't declare bootstrapZipFile as input - it's produced by downloadBootstrapZip
+    // We only declare the stamp file as output
     outputs.file(bootstrapStampFile)
     doLast {
         def sha = bootstrapZipFile.exists() ? sha256Of(bootstrapZipFile) : 'missing'
@@ -377,7 +379,7 @@ tasks.register('cleanNativeIfBootstrapChanged') {
     dependsOn tasks.named('generateBootstrapStamp')
 
     def stateFile = file("$buildDir/bootstrap-embedded.sha256")
-    inputs.file(bootstrapZipFile)
+    // Don't declare bootstrapZipFile as input - it's produced by downloadBootstrapZip
     outputs.file(stateFile)
 
     doLast {
@@ -414,7 +416,7 @@ afterEvaluate {
 
     tasks.matching { it.name.startsWith('externalNativeBuild') || it.name.startsWith('configureNdkBuild') || it.name.startsWith('buildNdkBuild') }.configureEach {
         dependsOn tasks.named('generateBootstrapStamp')
-        inputs.file(zip)
+        // Don't declare zip as input - it's produced by downloadBootstrapZip
         inputs.file(stamp)
     }
 
