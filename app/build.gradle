@@ -232,17 +232,18 @@ dependencies {
     implementation "io.github.dingyi222666.regex-lib:regex-lib-re2j:1.0.2"
 
     // Tree-sitter bindings + languages (from Maven Central)
-    implementation "io.github.itsaky:android-tree-sitter:1.4.2"
-    implementation "io.github.itsaky:tree-sitter-java:1.4.2"
-    implementation "io.github.itsaky:tree-sitter-kotlin:1.4.2"
-    implementation "io.github.itsaky:tree-sitter-xml:1.4.2"
-    implementation "io.github.itsaky:tree-sitter-json:1.4.2"
-    implementation "io.github.itsaky:tree-sitter-python:1.4.2"
-    implementation "io.github.itsaky:tree-sitter-c:1.4.2"
-    implementation "io.github.itsaky:tree-sitter-cpp:1.4.2"
-    implementation "io.github.itsaky:tree-sitter-aidl:1.4.2"
-    implementation "io.github.itsaky:tree-sitter-properties:1.4.2"
-    implementation "io.github.itsaky:tree-sitter-log:1.4.2"
+    // https://github.com/AndroidIDEOfficial/android-tree-sitter
+    implementation "com.itsaky.androidide.treesitter:android-tree-sitter:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-java:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-kotlin:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-xml:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-json:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-python:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-c:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-cpp:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-aidl:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-properties:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-log:4.1.0"
 
     // Required by android-tree-sitter (Java annotation processor generating headers).
     annotationProcessor "com.squareup:javapoet:1.13.0"
