@@ -374,9 +374,46 @@ task downloadBootstrapZip {
     }
 }
 
+/**
+ * Generate debug keystore if it doesn't exist (for CI builds)
+ */
+tasks.register('generateDebugKeystore') {
+    def keystoreFile = file("$projectDir/testkey_untrusted.jks")
+    outputs.file(keystoreFile)
+
+    doLast {
+        if (!keystoreFile.exists()) {
+            logger.quiet("Generating debug keystore...")
+            keystoreFile.parentFile.mkdirs()
+            def keytoolCmd = [
+                'keytool',
+                '-genkey',
+                '-v',
+                '-keystore', keystoreFile.absolutePath,
+                '-alias', 'alias',
+                '-keyalg', 'RSA',
+                '-keysize', '2048',
+                '-validity', '10000',
+                '-storepass', 'xrj45yWGLbsO7W0v',
+                '-keypass', 'xrj45yWGLbsO7W0v',
+                '-dname', 'CN=Debug, OU=Debug, O=Debug, L=Debug, ST=Debug, C=Debug'
+            ]
+            def process = keytoolCmd.execute()
+            process.waitFor()
+            if (process.exitValue() != 0) {
+                throw new GradleException("Failed to generate keystore: ${process.err.text}")
+            }
+            logger.quiet("Debug keystore generated at ${keystoreFile.absolutePath}")
+        } else {
+            logger.quiet("Debug keystore already exists at ${keystoreFile.absolutePath}")
+        }
+    }
+}
+
 preBuild.dependsOn setupOniguruma
 preBuild.dependsOn tasks.named('downloadBootstrapZip')
 preBuild.dependsOn tasks.named('generateBootstrapStamp')
+preBuild.dependsOn tasks.named('generateDebugKeystore')
 /**
  * If the bootstrap zip changes, we must force a rebuild of ndk-build outputs.
  * Some build setups can still reuse stale objects even when inputs change.
