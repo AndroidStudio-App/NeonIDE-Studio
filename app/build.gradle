@@ -320,16 +320,16 @@ task setupOniguruma {
                 from zipTree(onigZip)
                 into onigDir.parentFile
             }
-            
+
             def extractedDir = new File(onigDir.parentFile, zipRoot)
             if (extractedDir.exists()) {
                 if (onigDir.exists()) onigDir.deleteDir()
                 extractedDir.renameTo(onigDir)
             }
-            
+
             onigZip.delete()
         }
-        
+
         // Setup config.h
         if (!configFile.exists() && templateFile.exists()) {
             logger.quiet("Copying config.h...")
@@ -342,8 +342,31 @@ task setupOniguruma {
     }
 }
 
+task downloadBootstrapZip {
+    def bootstrapUrl = 'https://github.com/AndroidStudio-App/AndroidStudio-App/releases/download/bootstarprap/bootstrap-aarch64.zip'
+    def cppDir = new File(projectDir, 'src/main/cpp')
+    def bootstrapZip = new File(cppDir, 'bootstrap-aarch64.zip')
+
+    inputs.property('bootstrapUrl', bootstrapUrl)
+    outputs.file(bootstrapZip)
+
+    doLast {
+        if (!bootstrapZip.exists()) {
+            logger.quiet("Downloading bootstrap from $bootstrapUrl ...")
+            cppDir.mkdirs()
+            new URL(bootstrapUrl).withInputStream { i ->
+                bootstrapZip.withOutputStream { it << i }
+            }
+            logger.quiet("Bootstrap downloaded to ${bootstrapZip.absolutePath}")
+        } else {
+            logger.quiet("Bootstrap already exists at ${bootstrapZip.absolutePath}, skipping download")
+        }
+    }
+}
+
 preBuild.dependsOn setupOniguruma
 preBuild.dependsOn tasks.named('generateBootstrapStamp')
+preBuild.dependsOn tasks.named('downloadBootstrapZip')
 
 /**
  * If the bootstrap zip changes, we must force a rebuild of ndk-build outputs.
