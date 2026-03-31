@@ -4,21 +4,14 @@ plugins {
 }
 
 configurations.all {
-    exclude group: 'com.google.guava', module: 'listenablefuture'
+    exclude group: 'com.google.guava', 
+    module: 'listenablefuture'
 }
 
-def sha256Of = { File f ->
+def sha256Of = {File f -> 
     def digest = java.security.MessageDigest.getInstance('SHA-256')
-    f.withInputStream { is ->
-        def buffer = new byte[8192]
-        int read
-        while ((read = is.read(buffer)) > 0) {
-            digest.update(buffer, 0, read)
-        }
-    }
-    def checksum = new BigInteger(1, digest.digest()).toString(16)
-    while (checksum.length() < 64) { checksum = '0' + checksum }
-    return checksum
+    f.withInputStream {is -> digest.update(is.readAllBytes())}
+    return digest.digest().encodeHex().toString()
 }
 
 def bootstrapZipFile = file("$projectDir/src/main/cpp/bootstrap-aarch64.zip")
@@ -26,28 +19,16 @@ def bootstrapStampFile = file("$projectDir/src/main/cpp/generated/bootstrap-stam
 def bootstrapZipSha256 = bootstrapZipFile.exists() ? sha256Of(bootstrapZipFile) : 'missing'
 def bootstrapZipSize = bootstrapZipFile.exists() ? bootstrapZipFile.length() : -1L
 
-tasks.register('generateBootstrapStamp') {
-    outputs.file(bootstrapStampFile)
-    doLast {
-        def sha = bootstrapZipFile.exists() ? sha256Of(bootstrapZipFile) : 'missing'
-        def size = bootstrapZipFile.exists() ? bootstrapZipFile.length() : -1L
-        bootstrapStampFile.parentFile.mkdirs()
-        bootstrapStampFile.text = "" +
-            "    .ascii \"BOOTSTRAP_SHA256=${sha}\\n\"\n" +
-            "    .ascii \"BOOTSTRAP_SIZE=${size}\\n\"\n"
-    }
-}
-
 android {
-    ndkVersion "29.0.14206865"
+    ndkVersion '29.0.14206865'
     namespace 'com.neonide.studio'
+    compileSdk 34
+    
     defaultConfig {
         applicationId 'com.neonide.studio'
         minSdk 21
         targetSdk 34
-        compileSdk 34
-        versionCode 1022
-        versionName '0.119.0-beta.3'
+        versionName '0.1-beta'
 
         buildConfigField 'String', 'TERMUX_APP__BOOTSTRAP_SHA256', '"' + bootstrapZipSha256 + '"'
         buildConfigField 'long', 'TERMUX_APP__BOOTSTRAP_SIZE', bootstrapZipSize.toString() + 'L'
@@ -60,16 +41,16 @@ android {
         manifestPlaceholders.TERMUX_STYLING_APP_NAME = 'NeonIDE Studio:Styling'
         manifestPlaceholders.TERMUX_TASKER_APP_NAME = 'NeonIDE Studio:Tasker'
         manifestPlaceholders.TERMUX_WIDGET_APP_NAME = 'NeonIDE Studio:Widget'
-        
-        splits {
-            abi {
-                enable true
-                reset()
-                include 'arm64-v8a'
-                universalApk false
-            }
+    }
+    
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'arm64-v8a'
+            universalApk false
         }
-     }   
+    }   
 
     buildFeatures {
         buildConfig true
@@ -203,21 +184,9 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
-
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.robolectric:robolectric:4.10'
-    testImplementation 'androidx.arch.core:core-testing:2.2.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }
 
-task prepareBootstraps() {
-    doLast {
-        logger.quiet("prepareBootstraps: skipped (bootstrap is embedded in JNI)")
-    }
-}
-
-task setupOniguruma {
+tasks.register('setupOniguruma') {
     def onigDir = new File(projectDir, 'src/main/cpp/oniguruma/oniguruma')
     def onigZip = new File(buildDir, 'oniguruma.zip')
     def zipRoot = 'oniguruma-6.9.10'
@@ -230,13 +199,11 @@ task setupOniguruma {
 
     doLast {
         if (!onigDir.exists() || !new File(onigDir, 'src/oniguruma.h').exists()) {
-            logger.quiet("Downloading Oniguruma...")
+            logger.quiet("Downloading and extracting Oniguruma...")
             onigZip.parentFile.mkdirs()
             new URL('https://github.com/kkos/oniguruma/archive/refs/tags/v6.9.10.zip').withInputStream { i ->
                 onigZip.withOutputStream { it << i }
             }
-
-            logger.quiet("Extracting Oniguruma...")
             project.copy {
                 from zipTree(onigZip)
                 into onigDir.parentFile
@@ -251,11 +218,7 @@ task setupOniguruma {
             onigZip.delete()
         }
         
-
-        if (!configFile.exists()) {
-            return
-        }
-        
+        if (!configFile.exists())return
         logger.quiet("Generating config.h for Android NDK...")
         configFile.parentFile.mkdirs()
         configFile.text = """/* config.h for Android NDK build (arm64-v8a) */
@@ -285,7 +248,7 @@ task setupOniguruma {
     }
 }
 
-task downloadBootstrapZip {
+tasks.register('downloadBootstrapZip'){
     def bootstrapUrl = 'https://github.com/AndroidStudio-App/AndroidStudio-App/releases/download/bootstarprap/bootstrap-aarch64.zip'
     def cppDir = new File(projectDir, 'src/main/cpp')
     def bootstrapZip = new File(cppDir, 'bootstrap-aarch64.zip')
@@ -300,17 +263,25 @@ task downloadBootstrapZip {
             new URL(bootstrapUrl).withInputStream { i ->
                 bootstrapZip.withOutputStream { it << i }
             }
-            logger.quiet("Bootstrap downloaded to ${bootstrapZip.absolutePath}")
-        } else {
-            logger.quiet("Bootstrap already exists at ${bootstrapZip.absolutePath}, skipping download")
-        }
+        } 
+    }
+}
+
+tasks.register('generateBootstrapStamp') {
+    outputs.file(bootstrapStampFile)
+    doLast {
+        def sha = bootstrapZipFile.exists() ? sha256Of(bootstrapZipFile) : 'make sure task are below downloadBootstrap'
+        def size = bootstrapZipFile.exists() ? bootstrapZipFile.length() : -1L
+        bootstrapStampFile.parentFile.mkdirs()
+        bootstrapStampFile.text = "" +
+            ".ascii \"BOOTSTRAP_SHA256=${sha}\\n\"\n" +
+            ".ascii \"BOOTSTRAP_SIZE=${size}\\n\"\n"
     }
 }
 
 tasks.register('generateDebugKeystore') {
     def keystoreFile = file("$projectDir/testkey_untrusted.jks")
     outputs.file(keystoreFile)
-
     doLast {
         if (!keystoreFile.exists()) {
             logger.quiet("Generating debug keystore...")
@@ -324,42 +295,23 @@ tasks.register('generateDebugKeystore') {
                 '-keyalg', 'RSA',
                 '-keysize', '2048',
                 '-validity', '10000',
-                '-storepass', 'xrj45yWGLbsO7W0v',
-                '-keypass', 'xrj45yWGLbsO7W0v',
+                '-storepass', '12345678',
+                '-keypass', '12345678',
                 '-dname', 'CN=Debug, OU=Debug, O=Debug, L=Debug, ST=Debug, C=Debug'
             ]
             def process = keytoolCmd.execute()
             process.waitFor()
-            if (process.exitValue() != 0) {
-                throw new GradleException("Failed to generate keystore: ${process.err.text}")
             }
-            logger.quiet("Debug keystore generated at ${keystoreFile.absolutePath}")
-        } else {
-            logger.quiet("Debug keystore already exists at ${keystoreFile.absolutePath}")
         }
-    }
 }
-
-preBuild.dependsOn setupOniguruma
-preBuild.dependsOn tasks.named('downloadBootstrapZip')
-preBuild.dependsOn tasks.named('generateBootstrapStamp')
-preBuild.dependsOn tasks.named('generateDebugKeystore')
-/**
- * If the bootstrap zip changes, we must force a rebuild of ndk-build outputs.
- * Some build setups can still reuse stale objects even when inputs change.
- * This task makes the rebuild reliable without requiring manual rm -rf.
- */
+// Rebuild bootstrap ndk build when there's changes 
 tasks.register('cleanNativeIfBootstrapChanged') {
     dependsOn tasks.named('generateBootstrapStamp')
-
     def stateFile = file("$buildDir/bootstrap-embedded.sha256")
-    // Don't declare bootstrapZipFile as input - it's produced by downloadBootstrapZip
     outputs.file(stateFile)
-
     doLast {
-        def currentSha = bootstrapZipFile.exists() ? sha256Of(bootstrapZipFile) : 'missing'
+        def currentSha = bootstrapZipFile.exists() ? sha256Of(bootstrapZipFile) : null
         def previousSha = stateFile.exists() ? stateFile.text.trim() : null
-
         if (previousSha == null || previousSha != currentSha) {
             logger.lifecycle("Bootstrap zip changed (old=${previousSha}, new=${currentSha}). Cleaning native intermediates...")
             delete(
@@ -369,88 +321,13 @@ tasks.register('cleanNativeIfBootstrapChanged') {
                 file("$buildDir/intermediates/stripped_native_libs")
             )
         }
-
         stateFile.parentFile.mkdirs()
         stateFile.text = currentSha + "\n"
     }
 }
 
+preBuild.dependsOn tasks.named('setupOniguruma')
+preBuild.dependsOn tasks.named('downloadBootstrapZip')
+preBuild.dependsOn tasks.named('generateBootstrapStamp')
+preBuild.dependsOn tasks.named('generateDebugKeystore')
 preBuild.dependsOn tasks.named('cleanNativeIfBootstrapChanged')
-
-afterEvaluate {
-    android.applicationVariants.all { variant ->
-        variant.javaCompileProvider.get().dependsOn(prepareBootstraps)
-    }
-
-    // Make sure externalNativeBuild tasks re-run when bootstrap zip changes.
-    // Without this, Gradle may consider the native build up-to-date even though
-    // termux-bootstrap-zip.S uses `.incbin`.
-    def zip = file("$projectDir/src/main/cpp/bootstrap-aarch64.zip")
-    def stamp = file("$projectDir/src/main/cpp/generated/bootstrap-stamp.S")
-
-    tasks.matching { it.name.startsWith('externalNativeBuild') || it.name.startsWith('configureNdkBuild') || it.name.startsWith('buildNdkBuild') }.configureEach {
-        dependsOn tasks.named('generateBootstrapStamp')
-        // Don't declare zip as input - it's produced by downloadBootstrapZip
-        inputs.file(stamp)
-    }
-
-    // If the APK becomes smaller between builds (e.g., bootstrap shrinks), some packaging flows
-    // can leave trailing bytes in the existing output file, making the APK file-size look huge
-    // even though its zip contents are smaller. Deleting the output before packaging avoids that.
-    tasks.matching { it.name == 'packageDebug' || it.name == 'packageRelease' }.configureEach {
-        doFirst {
-            outputs.files.files.each { f ->
-                if (f != null && f.exists() && f.isFile()) {
-                    logger.lifecycle("Deleting stale APK output before packaging: ${f}")
-                    //noinspection ResultOfMethodCallIgnored
-                    f.delete()
-                }
-            }
-        }
-    }
-}
-
-def validateVersionName(String versionName) {
-    if (!java.util.regex.Pattern.matches('^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$', versionName)) {
-        throw new GradleException('The versionName "' + versionName + '" is not valid per semantic versioning spec.')
-    }
-}
-
-def downloadBootstrap(String arch, String expectedChecksum, String version) {
-    def digest = java.security.MessageDigest.getInstance('SHA-256')
-    def localUrl = 'src/main/cpp/bootstrap-' + arch + '.zip'
-    def file = new File(projectDir, localUrl)
-    if (file.exists()) {
-        def buffer = new byte[8192]
-        def input = new FileInputStream(file)
-        while (true) {
-            def readBytes = input.read(buffer)
-            if (readBytes < 0) break
-            digest.update(buffer, 0, readBytes)
-        }
-        def checksum = new BigInteger(1, digest.digest()).toString(16)
-        while (checksum.length() < 64) { checksum = '0' + checksum }
-        if (checksum == expectedChecksum) return
-        logger.quiet('Deleting old local file with wrong hash: ' + localUrl + ': expected: ' + expectedChecksum + ', actual: ' + checksum)
-        file.delete()
-    }
-
-    def remoteUrl = 'https://github.com/termux/termux-packages/releases/download/bootstrap-' + version + '/bootstrap-' + arch + '.zip'
-    logger.quiet('Downloading ' + remoteUrl + ' ...')
-
-    file.parentFile.mkdirs()
-    def out = new BufferedOutputStream(new FileOutputStream(file))
-
-    def connection = new URL(remoteUrl).openConnection()
-    connection.setInstanceFollowRedirects(true)
-    def digestStream = new java.security.DigestInputStream(connection.inputStream, digest)
-    out << digestStream
-    out.close()
-
-    def checksum = new BigInteger(1, digest.digest()).toString(16)
-    while (checksum.length() < 64) { checksum = '0' + checksum }
-    if (checksum != expectedChecksum) {
-        file.delete()
-        throw new GradleException('Wrong checksum for ' + remoteUrl + ': expected: ' + expectedChecksum + ', actual: ' + checksum)
-    }
-}
