@@ -19,7 +19,3 @@ dependencyResolutionManagement {
 rootProject.name = "NeonIDE Studio"
 
 include(":app")
-// Note: We intentionally do NOT include the local `sora-editor` build here.
-// Including it would also configure/build optional native modules (like oniguruma-native)
-// which require an NDK setup that may not be available in this workspace.
-// Instead, we depend on the published artifacts from Maven Central in :app.

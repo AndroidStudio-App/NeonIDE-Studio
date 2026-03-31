@@ -106,11 +106,7 @@ final class TermuxInstaller {
             return;
         }
 
-        if (!checkIfMinOrMaxSdkVersionIsIncompatible(activity,
-                BuildConfig.TERMUX_APP__BOOTSTRAP_MIN_SDK, BuildConfig.TERMUX_APP__BOOTSTRAP_MIN_RELEASE,
-                BuildConfig.TERMUX_APP__BOOTSTRAP_MAX_SDK, BuildConfig.TERMUX_APP__BOOTSTRAP_MAX_RELEASE)) {
-            return;
-        }
+        
 
         // If prefix directory exists, even if its a symlink to a valid directory and symlink is not broken/dangling
         if (FileUtils.directoryFileExists(TERMUX_PREFIX_DIR_PATH, true)) {
