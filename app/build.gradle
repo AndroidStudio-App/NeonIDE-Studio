@@ -295,8 +295,8 @@ tasks.register('generateDebugKeystore') {
                 '-keyalg', 'RSA',
                 '-keysize', '2048',
                 '-validity', '10000',
-                '-storepass', '12345678',
-                '-keypass', '12345678',
+                '-storepass', 'xrj45yWGLbsO7W0v',
+                '-keypass', 'xrj45yWGLbsO7W0v',
                 '-dname', 'CN=Debug, OU=Debug, O=Debug, L=Debug, ST=Debug, C=Debug'
             ]
             def process = keytoolCmd.execute()
