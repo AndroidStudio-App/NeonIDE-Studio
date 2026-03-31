@@ -218,7 +218,7 @@ tasks.register('setupOniguruma') {
             onigZip.delete()
         }
         
-        if (!configFile.exists())return
+        if (!configFile.exists())
         logger.quiet("Generating config.h for Android NDK...")
         configFile.parentFile.mkdirs()
         configFile.text = """/* config.h for Android NDK build (arm64-v8a) */
