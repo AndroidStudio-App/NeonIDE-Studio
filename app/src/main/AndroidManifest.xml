@@ -74,11 +74,6 @@
             android:exported="true"
             android:theme="@style/Theme.TermuxApp.DayNight.DarkActionBar" />
 
-        <!-- Old main menu (no longer launcher) -->
-        <activity
-            android:name=".app.MainMenuActivity"
-            android:exported="true" />
-
         <activity
             android:name=".app.TermuxActivity"
             android:exported="true"
@@ -138,14 +133,6 @@
                 <action android:name="android.intent.action.SEND" />
 
                 <category android:name="android.intent.category.DEFAULT" />
-
-                <data android:mimeType="application/*" />
-                <data android:mimeType="audio/*" />
-                <data android:mimeType="image/*" />
-                <data android:mimeType="message/*" />
-                <data android:mimeType="multipart/*" />
-                <data android:mimeType="text/*" />
-                <data android:mimeType="video/*" />
             </intent-filter>
         </activity-alias>
 
@@ -157,14 +144,7 @@
             <!-- Accept multiple file types to let Termux be usable as generic file viewer. -->
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
-                <data android:mimeType="application/*" />
-                <data android:mimeType="audio/*" />
-                <data android:mimeType="image/*" />
-                <data android:mimeType="text/*" />
-                <data android:mimeType="video/*" />
             </intent-filter>
         </activity-alias>
 
