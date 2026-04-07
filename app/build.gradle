@@ -27,7 +27,7 @@ android {
     defaultConfig {
         applicationId 'com.neonide.studio'
         minSdk 21
-        targetSdk 34
+        targetSdk 28
         versionName '0.1-beta'
 
         buildConfigField 'String', 'TERMUX_APP__BOOTSTRAP_SHA256', '"' + bootstrapZipSha256 + '"'
