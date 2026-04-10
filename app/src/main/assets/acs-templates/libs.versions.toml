@@ -141,7 +141,7 @@ asm = { module = "org.ow2.asm:asm", version = "9.9.1" }
 aapt2-common = { module = "com.android.tools:common", version = "32.1.0" }
 aapt2-annotations = { module = "com.android.tools:annotations", version = "31.2.2" }
 aapt2-jb-annotations = { module = "org.jetbrains:annotations", version = "26.1.0" }
-aapt2-proto = { module = "com.android.tools.build:aapt2-proto", version = "8.3.0-10880808" }
+aapt2-proto = { module = "com.android.tools.build:aapt2-proto", version = "8.13.2-14304508" }
 
 # use logback-core from logback-android instead
 #logging-logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
