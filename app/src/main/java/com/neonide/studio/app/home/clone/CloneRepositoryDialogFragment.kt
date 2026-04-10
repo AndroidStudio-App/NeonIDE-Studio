@@ -519,7 +519,7 @@ class CloneRepositoryDialogFragment : DialogFragment() {
 }
 
 // ===============================================
-// EVERYTHING BELOW IS OUTSIDE THE CLASS
+// EVERYTHING BELOW THIS LINE IS OUTSIDE THE CLASS
 // ===============================================
 
 private data class CloneUiState(
@@ -634,7 +634,6 @@ private fun CloneDialogContent(state: CloneUiState, actions: CloneActions) {
     }
 }
 
-// Small composables
 @Composable
 private fun CloneUrlField(urlText: String, onUrlChange: (String) -> Unit, urlError: String?) {
     OutlinedTextField(
