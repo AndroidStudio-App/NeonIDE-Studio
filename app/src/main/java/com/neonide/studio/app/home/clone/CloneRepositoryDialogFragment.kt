@@ -210,7 +210,7 @@ class CloneRepositoryDialogFragment : DialogFragment() {
         dialog.setOnShowListener {
             dialog.window?.apply {
                 setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                setLayout(WindowManager.LayoutParams.MATCH_PARENT, (ctx.resources.displayMetrics.heightPixels * 0.88).toInt())
+                setLayout(WindowManager.LayoutParams.MATCH_PARENT, (ctx.resources.displayMetrics.heightPixels * 0.95).toInt())
                 clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
                 clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM)
             }
@@ -568,11 +568,14 @@ private fun CloneDialogContent(state: CloneUiState, actions: CloneActions) {
     val scrollState = rememberLazyListState()
 
     LazyColumn(
+    contentPadding = PaddingValues(vertical = 8.dp),
         state = scrollState,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .wrapContentHeight()
+            .fillMaxSize()
+          //  .padding(horizontal = 16.dp, vertical = 12.dp)
+       // verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item { Text(text = stringResource(R.string.acs_clone_git_repository), style = MaterialTheme.typography.titleLarge) }
         item { Text(text = stringResource(R.string.acs_clone_git_repository_summary), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -662,7 +665,7 @@ private fun CloneDestField(destText: String, onDestChange: (String) -> Unit, des
     val focusRequester = remember { FocusRequester() }
     OutlinedTextField(
         value = destText, onValueChange = onDestChange, modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-        label = { Text(stringResource(R.string.acs_clone_destination))) },
+        label = { Text(stringResource(R.string.acs_clone_destination)) },
         isError = destError != null,
         supportingText = destError?.let { { Text(it) } },
         singleLine = true,
