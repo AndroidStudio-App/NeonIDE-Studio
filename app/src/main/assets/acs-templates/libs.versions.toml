@@ -85,7 +85,7 @@ common-markwon-linkify = { module = "io.noties.markwon:linkify", version.ref = "
 common-markwon-recycler = { module = "io.noties.markwon:recycler", version.ref = "markwon" }
 common-hiddenApiBypass = { module = "org.lsposed.hiddenapibypass:hiddenapibypass", version = "6.1" }
 common-termuxAmLib = { module = "com.termux:termux-am-library", version = "v2.0.0" }
-common-charts = { module = "com.github.AppDevNext:AndroidChart", version = "3.1.0.21" }
+common-charts = { module = "com.github.AppDevNext:AndroidChart", version = "3.1.0.31" }
 common-datastore = { module = "androidx.datastore:datastore-preferences", version = "1.1.7" }
 
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
