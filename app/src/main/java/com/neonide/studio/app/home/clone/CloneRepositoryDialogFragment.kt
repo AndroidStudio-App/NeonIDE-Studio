@@ -211,7 +211,7 @@ class CloneRepositoryDialogFragment : DialogFragment() {
 
             dialogContainer.addView(composeView)
 
-            // FIXES: Keyboard appears + dialog is taller + smooth scrolling
+            // Keyboard + smooth scrolling fixes
             dialog.window?.apply {
                 setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
                 setLayout(WindowManager.LayoutParams.MATCH_PARENT, (ctx.resources.displayMetrics.heightPixels * 0.88).toInt())
@@ -235,20 +235,229 @@ class CloneRepositoryDialogFragment : DialogFragment() {
         }
     }
 
-    // === All your original logic (startClone, stopClone, onCloneFinished, progress polling, helpers) ===
-    // (I kept them exactly as in the working version — only looksLikeAndroidProject is fixed)
+    private fun startClone() {
+        val ctx = requireContext()
+        val rawUrl = urlText.trim()
+        val destBase = destText.trim()
+        val repoNameInput = repoNameText.trim()
 
-    private fun startClone() { /* paste your original startClone() body here — unchanged */ }
-    private fun stopClone() { /* paste your original stopClone() body here — unchanged */ }
-    private fun onCloneFinished(appShell: AppShell) { /* paste your original onCloneFinished() body here — unchanged */ }
-    private fun startProgressPolling(execution: ExecutionCommand) { /* paste your original (500ms version) */ }
-    private fun stopProgressPolling() { /* paste your original */ }
-    private fun buildCloneUrl(...) { /* your original */ }
-    private fun inferRepoName(...) { /* your original */ }
-    private fun openProject(...) { /* your original */ }
-    private fun parseGitProgress(...) { /* your original */ }
-    private fun convertToBytes(...) { /* your original */ }
-    private fun formatBytes(bytes: Long): String { /* your original */ }
+        prefPut {
+            it.putString("url", rawUrl)
+            it.putString("dest", destBase)
+            it.putBoolean("open_after", openAfterClone)
+            it.putBoolean("shallow", shallowClone)
+            it.putString("depth", depthText.trim())
+            it.putBoolean("use_creds", useCreds)
+            it.putString("username", usernameText.trim())
+            it.putString("branch", branchText.trim())
+            it.putBoolean("single_branch", singleBranch)
+            it.putBoolean("submodules", recurseSubmodules)
+            it.putBoolean("shallow_submodules", shallowSubmodules)
+        }
+
+        if (rawUrl.isBlank()) { urlError = getString(R.string.acs_clone_error_empty_url); return }
+        val inferred = inferRepoName(rawUrl)
+        if (inferred == null) { urlError = getString(R.string.acs_clone_error_invalid_url); return }
+        val repoName = repoNameInput.ifBlank { inferred }
+        if (!repoName.matches(Regex("[A-Za-z0-9._-]+"))) { repoNameError = getString(R.string.invalid_name); return }
+
+        val url = buildCloneUrl(rawUrl, useCreds, usernameText.trim(), passwordText.trim()) ?: return
+
+        val baseDir = File(destBase)
+        if (!baseDir.exists()) baseDir.mkdirs()
+        if (!baseDir.exists() || !baseDir.isDirectory) { destError = getString(R.string.acs_err_invalid_picked_dir); return }
+        if (!baseDir.canWrite()) { destError = getString(R.string.acs_clone_error_destination_not_writable); return }
+
+        val targetDir = File(baseDir, repoName)
+        if (targetDir.exists()) { destError = getString(R.string.acs_clone_error_destination_exists); return }
+
+        activeTargetDir = targetDir
+        val gitPath = File(TermuxConstants.TERMUX_BIN_PREFIX_DIR, "git")
+        if (!gitPath.exists()) {
+            Toast.makeText(ctx, R.string.acs_clone_error_git_not_found, Toast.LENGTH_LONG).show()
+            return
+        }
+
+        lastProgressBytes = null
+        lastProgressPercent = null
+        lastProgressSpeedBps = null
+        isCloning = true
+        cloneStatus = getString(R.string.acs_clone_in_progress)
+
+        val args = mutableListOf("clone", "--progress")
+        val branch = branchText.trim()
+        if (branch.isNotBlank()) {
+            args += listOf("--branch", branch)
+            if (singleBranch) args += "--single-branch"
+        } else if (singleBranch) {
+            args += "--single-branch"
+        }
+        if (shallowClone) {
+            val depth = depthText.trim().toIntOrNull()
+            if (depth == null || depth < 1) { depthError = getString(R.string.acs_clone_error_invalid_depth); isCloning = false; return }
+            depthError = null
+            args += listOf("--depth", depth.toString())
+        }
+        if (recurseSubmodules) {
+            args += "--recurse-submodules"
+            if (shallowSubmodules) args += "--shallow-submodules"
+        }
+        args += listOf(url, targetDir.absolutePath)
+
+        val execution = ExecutionCommand(
+            TermuxShellManager.getNextShellId(),
+            gitPath.absolutePath,
+            args.toTypedArray(),
+            null,
+            baseDir.absolutePath,
+            ExecutionCommand.Runner.APP_SHELL.getName(),
+            false,
+        ).apply {
+            commandLabel = "git-clone"
+            commandDescription = "Clone repository"
+        }
+
+        runningShell = AppShell.execute(
+            ctx.applicationContext,
+            execution,
+            AppShell.AppShellClient { appShell ->
+                val activity = activity ?: return@AppShellClient
+                activity.runOnUiThread {
+                    stopProgressPolling()
+                    onCloneFinished(appShell)
+                }
+            },
+            TermuxShellEnvironment(),
+            null,
+            false,
+        )
+
+        startProgressPolling(execution)
+        if (runningShell == null) {
+            isCloning = false
+            Toast.makeText(ctx, R.string.acs_clone_error_failed, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun stopClone() {
+        stopProgressPolling()
+        runningShell?.killIfExecuting(requireContext(), true)
+        runningShell = null
+        isCloning = false
+        val target = activeTargetDir
+        activeTargetDir = null
+        cloneStatus = getString(R.string.acs_clone_error_failed)
+        Toast.makeText(requireContext(), R.string.acs_clone_stop, Toast.LENGTH_SHORT).show()
+
+        if (target != null && target.exists()) {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.acs_clone_delete_partial)
+                .setMessage(R.string.acs_clone_delete_partial_message)
+                .setPositiveButton(android.R.string.ok) { _, _ -> runCatching { target.deleteRecursively() } }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+    }
+
+    private fun onCloneFinished(appShell: AppShell) {
+        val ctx = requireContext()
+        val cmd = appShell.executionCommand
+        runningShell = null
+        isCloning = false
+        val exitCode = cmd.resultData.exitCode
+        val stderr = cmd.resultData.stderr?.toString()?.trim().orEmpty()
+
+        if (exitCode != null && exitCode == 0) {
+            Toast.makeText(ctx, R.string.acs_clone_success, Toast.LENGTH_SHORT).show()
+            val destBase = destText.trim()
+            val repoName = repoNameText.trim().ifBlank { inferRepoName(urlText.trim()).orEmpty() }
+            val projectDir = if (repoName.isNotBlank()) File(destBase, repoName) else null
+            activeTargetDir = null
+
+            if (projectDir != null && projectDir.exists()) {
+                WizardPreferences.setLastSaveLocation(ctx, File(destBase).absolutePath)
+                WizardPreferences.addRecentProject(ctx, projectDir.absolutePath)
+                if (openAfterClone) {
+                    if (!looksLikeAndroidProject(projectDir)) {
+                        MaterialAlertDialogBuilder(ctx)
+                            .setTitle(R.string.acs_clone_git_repository)
+                            .setMessage(R.string.acs_clone_not_android_project)
+                            .setPositiveButton(android.R.string.ok) { _, _ -> openProject(projectDir); dismissAllowingStateLoss() }
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .show()
+                        return
+                    }
+                    openProject(projectDir)
+                }
+            }
+            dismissAllowingStateLoss()
+            return
+        }
+
+        val msg = if (stderr.isNotBlank()) getString(R.string.acs_clone_error_failed) + "\n\n" + stderr.take(800) else getString(R.string.acs_clone_error_failed)
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle(R.string.error)
+            .setMessage(msg)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
+    private fun startProgressPolling(execution: ExecutionCommand) {
+        stopProgressPolling()
+        progressPoller = object : Runnable {
+            override fun run() {
+                if (runningShell == null) return
+                val stderr = execution.resultData.stderr.toString()
+                parseGitProgress(stderr)
+                uiHandler.postDelayed(this, 500)
+            }
+        }
+        uiHandler.post(progressPoller!!)
+    }
+
+    private fun stopProgressPolling() {
+        progressPoller?.let { uiHandler.removeCallbacks(it) }
+        progressPoller = null
+    }
+
+    private fun buildCloneUrl(rawUrl: String, useCreds: Boolean, username: String, password: String): String? {
+        val url = rawUrl.trim()
+        if (url.isBlank()) return null
+        if (!useCreds) return url
+        if (username.isBlank() || password.isBlank()) {
+            if (username.isBlank()) usernameError = getString(R.string.acs_clone_username)
+            if (password.isBlank()) passwordError = getString(R.string.acs_clone_password)
+            return null
+        }
+        val uri = runCatching { URI(url) }.getOrNull() ?: return null
+        if (uri.scheme != "https") { urlError = getString(R.string.acs_clone_error_invalid_url); return null }
+        val userEnc = java.net.URLEncoder.encode(username, "UTF-8")
+        val passEnc = java.net.URLEncoder.encode(password, "UTF-8")
+        val auth = "$userEnc:$passEnc"
+        return URI(uri.scheme, auth, uri.host, uri.port, uri.path, uri.query, uri.fragment).toString()
+    }
+
+    private fun inferRepoName(url: String): String? {
+        val trimmed = url.trim().removeSuffix("/")
+        if (trimmed.isBlank()) return null
+        val scpLike = Regex("^[^@]+@[^:]+:(.+)$").find(trimmed)
+        val path = when {
+            scpLike != null -> scpLike.groupValues[1]
+            else -> runCatching { URI(trimmed) }.getOrNull()?.path
+        } ?: return null
+        val parts = path.split('/').filter { it.isNotBlank() }
+        val last = parts.lastOrNull() ?: return null
+        val name = last.removeSuffix(".git")
+        if (name.isBlank() || !name.matches(Regex("[A-Za-z0-9._-]+"))) return null
+        return name
+    }
+
+    private fun openProject(projectDir: File) {
+        val ctx = requireContext()
+        val intent = Intent(ctx, SoraEditorActivityK::class.java)
+        intent.putExtra(SoraEditorActivityK.EXTRA_PROJECT_DIR, projectDir.absolutePath)
+        startActivity(intent)
+    }
 
     private fun looksLikeAndroidProject(dir: File): Boolean {
         val hasGradle = File(dir, "settings.gradle").exists() ||
@@ -258,6 +467,51 @@ class CloneRepositoryDialogFragment : DialogFragment() {
         if (!hasGradle) return false
         return File(dir, "app/src/main/AndroidManifest.xml").exists() ||
                 File(dir, "src/main/AndroidManifest.xml").exists()
+    }
+
+    private fun parseGitProgress(stderr: String) {
+        val lastLines = stderr.takeLast(4000).split('\n').takeLast(20)
+        val line = lastLines.lastOrNull { it.contains("Receiving objects") || it.contains("Resolving deltas") || it.contains("Counting objects") } ?: return
+        val pct = Regex("(\\d{1,3})%").find(line)?.groupValues?.getOrNull(1)?.toIntOrNull()?.coerceIn(0, 100)
+        val sizeMatch = Regex("([0-9]+(?:\\.[0-9]+)?)\\s*(KiB|MiB|GiB|KB|MB|GB)").find(line)
+        val bytes = sizeMatch?.let { m ->
+            val num = m.groupValues[1].toDoubleOrNull() ?: return@let null
+            val unit = m.groupValues[2]
+            convertToBytes(num, unit)
+        }
+        val speedMatch = Regex("\\|\\s*([0-9]+(?:\\.[0-9]+)?)\\s*(KiB|MiB|GiB|KB|MB|GB)/s").find(line)
+        val speedBps = speedMatch?.let { m ->
+            val num = m.groupValues[1].toDoubleOrNull() ?: return@let null
+            val unit = m.groupValues[2]
+            convertToBytes(num, unit)
+        }
+        if (pct != null) lastProgressPercent = pct
+        if (bytes != null) lastProgressBytes = bytes
+        if (speedBps != null) lastProgressSpeedBps = speedBps
+    }
+
+    private fun convertToBytes(value: Double, unit: String): Long {
+        val base = when (unit) { "KiB", "MiB", "GiB" -> 1024.0; else -> 1000.0 }
+        val factor = when (unit) {
+            "KiB", "KB" -> base
+            "MiB", "MB" -> base * base
+            "GiB", "GB" -> base * base * base
+            else -> 1.0
+        }
+        return (value * factor).toLong()
+    }
+
+    private fun formatBytes(bytes: Long): String {
+        val kb = 1024.0
+        val mb = kb * 1024
+        val gb = mb * 1024
+        val b = bytes.toDouble()
+        return when {
+            b >= gb -> String.format(java.util.Locale.US, "%.2f GB", b / gb)
+            b >= mb -> String.format(java.util.Locale.US, "%.1f MB", b / mb)
+            b >= kb -> String.format(java.util.Locale.US, "%.1f KB", b / kb)
+            else -> "$bytes B"
+        }
     }
 
     override fun onDestroyView() {
@@ -313,7 +567,7 @@ private data class CloneActions(
     val onStopOrCancel: () -> Unit,
 )
 
-// Clean Compose content with LazyColumn (scroll indicator visible + smooth)
+// Main Compose content (LazyColumn = visible scrollbar + smooth)
 @Composable
 private fun CloneDialogContent(state: CloneUiState, actions: CloneActions) {
     val scrollState = rememberLazyListState()
@@ -380,22 +634,104 @@ private fun CloneDialogContent(state: CloneUiState, actions: CloneActions) {
     }
 }
 
-// === All your original small composables (unchanged) ===
-@Composable private fun CloneUrlField(urlText: String, onUrlChange: (String) -> Unit, urlError: String?) { /* your original */ }
-@Composable private fun CloneRepoNameField(repoNameText: String, onRepoNameChange: (String) -> Unit, repoNameError: String?) { /* your original */ }
-@Composable private fun CloneDestField(destText: String, onDestChange: (String) -> Unit, destError: String?, onBrowseDest: () -> Unit) { /* your original */ }
-@Composable private fun CloneCredsSwitch(useCreds: Boolean, onUseCredsChange: (Boolean) -> Unit) { /* your original */ }
-@Composable private fun CloneUsernameField(usernameText: String, onUsernameChange: (String) -> Unit, usernameError: String?) { /* your original */ }
-@Composable private fun ClonePasswordField(passwordText: String, onPasswordChange: (String) -> Unit, passwordError: String?) { /* your original */ }
-@Composable private fun CloneAdvancedSection(
+// All small composables (exactly as you originally had them)
+@Composable
+private fun CloneUrlField(urlText: String, onUrlChange: (String) -> Unit, urlError: String?) {
+    OutlinedTextField(
+        value = urlText, onValueChange = onUrlChange, modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.acs_clone_repo_url)) },
+        isError = urlError != null,
+        supportingText = urlError?.let { { Text(it) } },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
+    )
+}
+
+@Composable
+private fun CloneRepoNameField(repoNameText: String, onRepoNameChange: (String) -> Unit, repoNameError: String?) {
+    OutlinedTextField(
+        value = repoNameText, onValueChange = onRepoNameChange, modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.acs_clone_repo_name)) },
+        isError = repoNameError != null,
+        supportingText = repoNameError?.let { { Text(it) } },
+        singleLine = true
+    )
+}
+
+@Composable
+private fun CloneDestField(destText: String, onDestChange: (String) -> Unit, destError: String?, onBrowseDest: () -> Unit) {
+    OutlinedTextField(
+        value = destText, onValueChange = onDestChange, modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.acs_clone_destination)) },
+        isError = destError != null,
+        supportingText = destError?.let { { Text(it) } },
+        singleLine = true,
+        trailingIcon = { IconButton(onClick = onBrowseDest) { Icon(imageVector = Icons.Default.Folder, contentDescription = stringResource(R.string.browse)) } }
+    )
+}
+
+@Composable
+private fun CloneCredsSwitch(useCreds: Boolean, onUseCredsChange: (Boolean) -> Unit) {
+    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Switch(checked = useCreds, onCheckedChange = onUseCredsChange)
+        Spacer(Modifier.width(8.dp))
+        Text(text = stringResource(R.string.acs_clone_use_credentials))
+    }
+}
+
+@Composable
+private fun CloneUsernameField(usernameText: String, onUsernameChange: (String) -> Unit, usernameError: String?) {
+    OutlinedTextField(
+        value = usernameText, onValueChange = onUsernameChange, modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.acs_clone_username)) },
+        isError = usernameError != null,
+        supportingText = usernameError?.let { { Text(it) } },
+        singleLine = true
+    )
+}
+
+@Composable
+private fun ClonePasswordField(passwordText: String, onPasswordChange: (String) -> Unit, passwordError: String?) {
+    OutlinedTextField(
+        value = passwordText, onValueChange = onPasswordChange, modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.acs_clone_password)) },
+        visualTransformation = PasswordVisualTransformation(),
+        isError = passwordError != null,
+        supportingText = passwordError?.let { { Text(it) } },
+        singleLine = true
+    )
+}
+
+@Composable
+private fun CloneAdvancedSection(
     branchText: String, onBranchChange: (String) -> Unit,
     singleBranch: Boolean, onSingleBranchChange: (Boolean) -> Unit,
     shallowClone: Boolean, onShallowCloneChange: (Boolean) -> Unit,
     depthText: String, onDepthChange: (String) -> Unit, depthError: String?,
     recurseSubmodules: Boolean, onRecurseSubmodulesChange: (Boolean) -> Unit,
     shallowSubmodules: Boolean, onShallowSubmodulesChange: (Boolean) -> Unit,
-    openAfterClone: Boolean, onOpenAfterCloneChange: (Boolean) -> Unit
-) { /* your original */ }
+    openAfterClone: Boolean, onOpenAfterCloneChange: (Boolean) -> Unit,
+) {
+    Text(text = stringResource(R.string.acs_clone_advanced), style = MaterialTheme.typography.titleSmall)
+
+    OutlinedTextField(value = branchText, onValueChange = onBranchChange, modifier = Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.acs_clone_branch)) }, singleLine = true)
+    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Switch(checked = singleBranch, onCheckedChange = onSingleBranchChange); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.acs_clone_single_branch)) }
+    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Switch(checked = shallowClone, onCheckedChange = onShallowCloneChange); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.acs_clone_shallow)) }
+
+    if (shallowClone) {
+        OutlinedTextField(value = depthText, onValueChange = onDepthChange, modifier = Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.acs_clone_depth)) }, isError = depthError != null, supportingText = depthError?.let { { Text(it) } }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+    }
+
+    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Switch(checked = recurseSubmodules, onCheckedChange = onRecurseSubmodulesChange); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.acs_clone_recurse_submodules)) }
+    if (recurseSubmodules) {
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Switch(checked = shallowSubmodules, onCheckedChange = onShallowSubmodulesChange); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.acs_clone_shallow_submodules)) }
+    }
+
+    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Checkbox(checked = openAfterClone, onCheckedChange = onOpenAfterCloneChange)
+        Text(stringResource(R.string.acs_clone_open_after))
+    }
+}
 
 @Composable
 private fun formatBytes(bytes: Long): String {
