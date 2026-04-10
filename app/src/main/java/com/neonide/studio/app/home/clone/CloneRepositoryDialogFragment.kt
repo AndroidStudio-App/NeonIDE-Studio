@@ -57,7 +57,6 @@ class CloneRepositoryDialogFragment : DialogFragment() {
     private var progressPoller: Runnable? = null
     private var runningShell: AppShell? = null
 
-    // UI state
     private var urlText by mutableStateOf("")
     private var destText by mutableStateOf("")
     private var repoNameText by mutableStateOf("")
@@ -211,7 +210,6 @@ class CloneRepositoryDialogFragment : DialogFragment() {
 
             dialogContainer.addView(composeView)
 
-            // Keyboard + smooth scrolling fixes
             dialog.window?.apply {
                 setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
                 setLayout(WindowManager.LayoutParams.MATCH_PARENT, (ctx.resources.displayMetrics.heightPixels * 0.88).toInt())
@@ -520,7 +518,10 @@ class CloneRepositoryDialogFragment : DialogFragment() {
     }
 }
 
-// Data classes
+// ===============================================
+// EVERYTHING BELOW IS OUTSIDE THE CLASS
+// ===============================================
+
 private data class CloneUiState(
     val urlText: String = "",
     val urlError: String? = null,
@@ -567,7 +568,6 @@ private data class CloneActions(
     val onStopOrCancel: () -> Unit,
 )
 
-// Main Compose content (LazyColumn = visible scrollbar + smooth)
 @Composable
 private fun CloneDialogContent(state: CloneUiState, actions: CloneActions) {
     val scrollState = rememberLazyListState()
@@ -634,7 +634,7 @@ private fun CloneDialogContent(state: CloneUiState, actions: CloneActions) {
     }
 }
 
-// All small composables (exactly as you originally had them)
+// Small composables
 @Composable
 private fun CloneUrlField(urlText: String, onUrlChange: (String) -> Unit, urlError: String?) {
     OutlinedTextField(
