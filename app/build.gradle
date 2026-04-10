@@ -195,7 +195,7 @@ dependencies {
     // Local jars for demo language server(s)
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 }
 
 tasks.register('setupOniguruma') {
