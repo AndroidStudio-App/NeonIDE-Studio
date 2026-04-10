@@ -154,7 +154,7 @@ dependencies {
     implementation "org.codelibs:jhighlight:2.0.0"
 
     // --- Sora Editor Integrated Code Dependencies ---
-    implementation "androidx.collection:collection:1.5.0"
+    implementation "androidx.collection:collection:1.6.0"
     implementation "com.google.code.gson:gson:2.13.2"
     implementation "org.jruby.jcodings:jcodings:1.0.63"
     implementation "org.jruby.joni:joni:2.2.6"
