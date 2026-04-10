@@ -187,7 +187,7 @@ dependencies {
     implementation "io.github.dingyi222666.monarch:monarch-language-pack:1.0.2"
 
     // LSP demo (needed in app code; editor-lsp doesn't expose it via api)
-    implementation "org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0"
+    implementation "org.eclipse.lsp4j:org.eclipse.lsp4j:1.0.0"
 
     // Coroutines (used by LSP demo & async loading)
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
