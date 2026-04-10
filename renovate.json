@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended",
     "schedule:automergeDaily",
-    "dependencyDashboard"
+    ":dependencyDashboard"
   ],
   "labels": [
     "dependencies",
