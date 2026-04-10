@@ -147,7 +147,7 @@ dependencies {
     implementation 'io.noties.markwon:linkify:' + project.properties.markwonVersion
     implementation 'io.noties.markwon:recycler:' + project.properties.markwonVersion
     implementation 'org.lsposed.hiddenapibypass:hiddenapibypass:6.1'
-    implementation 'com.termux:termux-am-library:v2.0.0'
+    implementation 'com.termux:termux-am-library:2.0.0'
     
 
     // Java -> XHTML syntax highlighting (for preview/export)
