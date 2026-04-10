@@ -15,6 +15,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
@@ -141,78 +144,75 @@ class CloneRepositoryDialogFragment : DialogFragment() {
         openAfterClone = prefGetBool("open_after", true)
 
         val paddingPx = (24 * ctx.resources.displayMetrics.density).toInt()
-        val dialogContainer = android.widget.FrameLayout(ctx).apply {
+        val composeView = androidx.compose.ui.platform.ComposeView(ctx).apply {
             setPadding(paddingPx, 0, paddingPx, 0)
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+
+            setContent {
+                MaterialTheme {
+                    val state = CloneUiState(
+                        urlText = urlText,
+                        urlError = urlError,
+                        destText = destText,
+                        destError = destError,
+                        repoNameText = repoNameText,
+                        repoNameError = repoNameError,
+                        branchText = branchText,
+                        usernameText = usernameText,
+                        usernameError = usernameError,
+                        passwordText = passwordText,
+                        passwordError = passwordError,
+                        depthText = depthText,
+                        depthError = depthError,
+                        useCreds = useCreds,
+                        shallowClone = shallowClone,
+                        singleBranch = singleBranch,
+                        recurseSubmodules = recurseSubmodules,
+                        shallowSubmodules = shallowSubmodules,
+                        openAfterClone = openAfterClone,
+                        isCloning = isCloning,
+                        cloneStatus = cloneStatus,
+                        lastProgressPercent = lastProgressPercent,
+                        lastProgressBytes = lastProgressBytes,
+                        lastProgressSpeedBps = lastProgressSpeedBps,
+                    )
+
+                    val actions = CloneActions(
+                        onUrlChange = { urlText = it; urlError = null; if (!repoNameManuallyEdited) repoNameText = inferRepoName(it) ?: "" },
+                        onDestChange = { destText = it; destError = null },
+                        onRepoNameChange = { repoNameText = it; repoNameManuallyEdited = true; repoNameError = null },
+                        onBranchChange = { branchText = it },
+                        onUsernameChange = { usernameText = it; usernameError = null },
+                        onPasswordChange = { passwordText = it; passwordError = null },
+                        onDepthChange = { depthText = it; depthError = null },
+                        onUseCredsChange = { useCreds = it },
+                        onShallowCloneChange = { shallowClone = it },
+                        onSingleBranchChange = { singleBranch = it },
+                        onRecurseSubmodulesChange = { recurseSubmodules = it; if (!it) shallowSubmodules = false },
+                        onShallowSubmodulesChange = { shallowSubmodules = it },
+                        onOpenAfterCloneChange = { openAfterClone = it },
+                        onBrowseDest = { pickDirectory() },
+                        onClone = { if (runningShell == null) startClone() },
+                        onStopOrCancel = { if (isCloning) stopClone() else dismiss() }
+                    )
+
+                    CloneDialogContent(state, actions)
+                }
+            }
         }
 
         val dialog = MaterialAlertDialogBuilder(ctx)
-            .setView(dialogContainer)
+            .setView(composeView)
             .setPositiveButton(R.string.acs_clone_action, null)
             .setNegativeButton(android.R.string.cancel, null)
             .create()
 
         dialog.setOnShowListener {
-            val composeView = androidx.compose.ui.platform.ComposeView(ctx).apply {
-                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-
-                setContent {
-                    MaterialTheme {
-                        val state = CloneUiState(
-                            urlText = urlText,
-                            urlError = urlError,
-                            destText = destText,
-                            destError = destError,
-                            repoNameText = repoNameText,
-                            repoNameError = repoNameError,
-                            branchText = branchText,
-                            usernameText = usernameText,
-                            usernameError = usernameError,
-                            passwordText = passwordText,
-                            passwordError = passwordError,
-                            depthText = depthText,
-                            depthError = depthError,
-                            useCreds = useCreds,
-                            shallowClone = shallowClone,
-                            singleBranch = singleBranch,
-                            recurseSubmodules = recurseSubmodules,
-                            shallowSubmodules = shallowSubmodules,
-                            openAfterClone = openAfterClone,
-                            isCloning = isCloning,
-                            cloneStatus = cloneStatus,
-                            lastProgressPercent = lastProgressPercent,
-                            lastProgressBytes = lastProgressBytes,
-                            lastProgressSpeedBps = lastProgressSpeedBps,
-                        )
-
-                        val actions = CloneActions(
-                            onUrlChange = { urlText = it; urlError = null; if (!repoNameManuallyEdited) repoNameText = inferRepoName(it) ?: "" },
-                            onDestChange = { destText = it; destError = null },
-                            onRepoNameChange = { repoNameText = it; repoNameManuallyEdited = true; repoNameError = null },
-                            onBranchChange = { branchText = it },
-                            onUsernameChange = { usernameText = it; usernameError = null },
-                            onPasswordChange = { passwordText = it; passwordError = null },
-                            onDepthChange = { depthText = it; depthError = null },
-                            onUseCredsChange = { useCreds = it },
-                            onShallowCloneChange = { shallowClone = it },
-                            onSingleBranchChange = { singleBranch = it },
-                            onRecurseSubmodulesChange = { recurseSubmodules = it; if (!it) shallowSubmodules = false },
-                            onShallowSubmodulesChange = { shallowSubmodules = it },
-                            onOpenAfterCloneChange = { openAfterClone = it },
-                            onBrowseDest = { pickDirectory() },
-                            onClone = { if (runningShell == null) startClone() },
-                            onStopOrCancel = { if (isCloning) stopClone() else dismiss() }
-                        )
-
-                        CloneDialogContent(state, actions)
-                    }
-                }
-            }
-
-            dialogContainer.addView(composeView)
-
             dialog.window?.apply {
                 setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
                 setLayout(WindowManager.LayoutParams.MATCH_PARENT, (ctx.resources.displayMetrics.heightPixels * 0.88).toInt())
+                clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+                clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM)
             }
 
             val positive = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
@@ -517,11 +517,6 @@ class CloneRepositoryDialogFragment : DialogFragment() {
         super.onDestroyView()
     }
 }
-
-// ===============================================
-// EVERYTHING BELOW THIS LINE IS OUTSIDE THE CLASS
-// ===============================================
-
 private data class CloneUiState(
     val urlText: String = "",
     val urlError: String? = null,
@@ -636,8 +631,12 @@ private fun CloneDialogContent(state: CloneUiState, actions: CloneActions) {
 
 @Composable
 private fun CloneUrlField(urlText: String, onUrlChange: (String) -> Unit, urlError: String?) {
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
     OutlinedTextField(
-        value = urlText, onValueChange = onUrlChange, modifier = Modifier.fillMaxWidth(),
+        value = urlText, onValueChange = onUrlChange, modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
         label = { Text(stringResource(R.string.acs_clone_repo_url)) },
         isError = urlError != null,
         supportingText = urlError?.let { { Text(it) } },
@@ -648,8 +647,9 @@ private fun CloneUrlField(urlText: String, onUrlChange: (String) -> Unit, urlErr
 
 @Composable
 private fun CloneRepoNameField(repoNameText: String, onRepoNameChange: (String) -> Unit, repoNameError: String?) {
+    val focusRequester = remember { FocusRequester() }
     OutlinedTextField(
-        value = repoNameText, onValueChange = onRepoNameChange, modifier = Modifier.fillMaxWidth(),
+        value = repoNameText, onValueChange = onRepoNameChange, modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
         label = { Text(stringResource(R.string.acs_clone_repo_name)) },
         isError = repoNameError != null,
         supportingText = repoNameError?.let { { Text(it) } },
@@ -659,9 +659,10 @@ private fun CloneRepoNameField(repoNameText: String, onRepoNameChange: (String) 
 
 @Composable
 private fun CloneDestField(destText: String, onDestChange: (String) -> Unit, destError: String?, onBrowseDest: () -> Unit) {
+    val focusRequester = remember { FocusRequester() }
     OutlinedTextField(
-        value = destText, onValueChange = onDestChange, modifier = Modifier.fillMaxWidth(),
-        label = { Text(stringResource(R.string.acs_clone_destination)) },
+        value = destText, onValueChange = onDestChange, modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+        label = { Text(stringResource(R.string.acs_clone_destination))) },
         isError = destError != null,
         supportingText = destError?.let { { Text(it) } },
         singleLine = true,
@@ -680,8 +681,9 @@ private fun CloneCredsSwitch(useCreds: Boolean, onUseCredsChange: (Boolean) -> U
 
 @Composable
 private fun CloneUsernameField(usernameText: String, onUsernameChange: (String) -> Unit, usernameError: String?) {
+    val focusRequester = remember { FocusRequester() }
     OutlinedTextField(
-        value = usernameText, onValueChange = onUsernameChange, modifier = Modifier.fillMaxWidth(),
+        value = usernameText, onValueChange = onUsernameChange, modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
         label = { Text(stringResource(R.string.acs_clone_username)) },
         isError = usernameError != null,
         supportingText = usernameError?.let { { Text(it) } },
@@ -691,8 +693,9 @@ private fun CloneUsernameField(usernameText: String, onUsernameChange: (String) 
 
 @Composable
 private fun ClonePasswordField(passwordText: String, onPasswordChange: (String) -> Unit, passwordError: String?) {
+    val focusRequester = remember { FocusRequester() }
     OutlinedTextField(
-        value = passwordText, onValueChange = onPasswordChange, modifier = Modifier.fillMaxWidth(),
+        value = passwordText, onValueChange = onPasswordChange, modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
         label = { Text(stringResource(R.string.acs_clone_password)) },
         visualTransformation = PasswordVisualTransformation(),
         isError = passwordError != null,
@@ -711,14 +714,17 @@ private fun CloneAdvancedSection(
     shallowSubmodules: Boolean, onShallowSubmodulesChange: (Boolean) -> Unit,
     openAfterClone: Boolean, onOpenAfterCloneChange: (Boolean) -> Unit,
 ) {
+    val branchFocusRequester = remember { FocusRequester() }
+    val depthFocusRequester = remember { FocusRequester() }
+
     Text(text = stringResource(R.string.acs_clone_advanced), style = MaterialTheme.typography.titleSmall)
 
-    OutlinedTextField(value = branchText, onValueChange = onBranchChange, modifier = Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.acs_clone_branch)) }, singleLine = true)
+    OutlinedTextField(value = branchText, onValueChange = onBranchChange, modifier = Modifier.fillMaxWidth().focusRequester(branchFocusRequester), label = { Text(stringResource(R.string.acs_clone_branch)) }, singleLine = true)
     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Switch(checked = singleBranch, onCheckedChange = onSingleBranchChange); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.acs_clone_single_branch)) }
     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Switch(checked = shallowClone, onCheckedChange = onShallowCloneChange); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.acs_clone_shallow)) }
 
     if (shallowClone) {
-        OutlinedTextField(value = depthText, onValueChange = onDepthChange, modifier = Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.acs_clone_depth)) }, isError = depthError != null, supportingText = depthError?.let { { Text(it) } }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+        OutlinedTextField(value = depthText, onValueChange = onDepthChange, modifier = Modifier.fillMaxWidth().focusRequester(depthFocusRequester), label = { Text(stringResource(R.string.acs_clone_depth)) }, isError = depthError != null, supportingText = depthError?.let { { Text(it) } }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
     }
 
     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Switch(checked = recurseSubmodules, onCheckedChange = onRecurseSubmodulesChange); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.acs_clone_recurse_submodules)) }

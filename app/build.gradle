@@ -21,7 +21,8 @@ def bootstrapZipSha256 = bootstrapZipFile.exists() ? sha256Of(bootstrapZipFile) 
 def bootstrapZipSize = bootstrapZipFile.exists() ? bootstrapZipFile.length() : -1L
 
 android {
-    ndkVersion '29.0.14206865'
+    ndkVersion '28.2.13676358'
+    buildToolsVersion '35.0.1'
     namespace 'com.neonide.studio'
     compileSdk 36
     
