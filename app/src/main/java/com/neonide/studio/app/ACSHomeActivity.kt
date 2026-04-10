@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.neonide.studio.R
+import com.neonide.studio.shared.termux.settings.properties.TermuxAppSharedProperties
 
 class ACSHomeActivity : AppCompatActivity() {
 
@@ -170,7 +171,7 @@ class ACSHomeActivity : AppCompatActivity() {
             ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         }
         
-        val properties = com.neonide.studio.shared.termux.settings.properties.TermuxAppSharedProperties.getProperties()
+        val properties = TermuxAppSharedProperties.getProperties()
         val externalAppsAllowed = properties?.shouldAllowExternalApps() ?: false
         
         return storageGranted && externalAppsAllowed

@@ -97,6 +97,9 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.neonide.studio.shared.logger.IDEFileLogger
+import com.neonide.studio.shared.shell.command.ExecutionCommand
+import com.neonide.studio.app.TermuxService
 import org.eclipse.tm4e.core.registry.IGrammarSource
 import org.eclipse.tm4e.core.registry.IThemeSource
 import java.io.BufferedReader
@@ -1100,7 +1103,7 @@ class SoraEditorActivityK : AppCompatActivity() {
     }
 
     private fun openIdeFileLog() {
-        val logFile = com.neonide.studio.shared.logger.IDEFileLogger.getLogFile()
+        val logFile = IDEFileLogger.getLogFile()
         if (logFile == null || !logFile.exists()) {
             android.widget.Toast.makeText(this, "IDE file log not found. Enable it in IDE Configurations first.", android.widget.Toast.LENGTH_LONG).show()
             return
@@ -1912,7 +1915,7 @@ class SoraEditorActivityK : AppCompatActivity() {
         execIntent.putExtra(TermuxConstants.TERMUX_APP.TERMUX_SERVICE.EXTRA_WORKDIR, d.absolutePath)
         execIntent.putExtra(
             TermuxConstants.TERMUX_APP.TERMUX_SERVICE.EXTRA_RUNNER,
-            com.neonide.studio.shared.shell.command.ExecutionCommand.Runner.TERMINAL_SESSION.getName()
+            ExecutionCommand.Runner.TERMINAL_SESSION.getName()
         )
         // Use a new session and bring Termux UI to foreground
         execIntent.putExtra(
@@ -1921,7 +1924,7 @@ class SoraEditorActivityK : AppCompatActivity() {
         )
         execIntent.putExtra(
             TermuxConstants.TERMUX_APP.TERMUX_SERVICE.EXTRA_SHELL_CREATE_MODE,
-            com.neonide.studio.shared.shell.command.ExecutionCommand.ShellCreateMode.ALWAYS.getMode()
+            ExecutionCommand.ShellCreateMode.ALWAYS.getMode()
         )
         execIntent.putExtra(TermuxConstants.TERMUX_APP.TERMUX_SERVICE.EXTRA_SHELL_NAME, "file-tree")
         execIntent.putExtra(TermuxConstants.TERMUX_APP.TERMUX_SERVICE.EXTRA_COMMAND_LABEL, "Terminal")

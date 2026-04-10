@@ -2,6 +2,7 @@ package com.neonide.studio.app.gradle
 
 import android.content.Context
 import com.neonide.studio.shared.termux.TermuxConstants
+import com.neonide.studio.shared.termux.shell.command.environment.TermuxShellEnvironment
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -86,7 +87,7 @@ object GradleRunner {
 
         // Use TermuxShellEnvironment so PATH/TMPDIR etc match runtime.
         val env = pb.environment()
-        val termuxEnv = com.neonide.studio.shared.termux.shell.command.environment.TermuxShellEnvironment()
+        val termuxEnv = TermuxShellEnvironment()
             .getEnvironment(context, false)
         env.putAll(termuxEnv)
 
