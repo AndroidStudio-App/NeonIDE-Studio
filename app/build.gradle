@@ -176,7 +176,7 @@ dependencies {
     implementation "com.itsaky.androidide.treesitter:tree-sitter-python:4.3.2"
     implementation "com.itsaky.androidide.treesitter:tree-sitter-c:4.1.0"
     implementation "com.itsaky.androidide.treesitter:tree-sitter-cpp:4.3.2"
-    implementation "com.itsaky.androidide.treesitter:tree-sitter-aidl:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-aidl:4.3.2"
     implementation "com.itsaky.androidide.treesitter:tree-sitter-properties:4.3.2"
     implementation "com.itsaky.androidide.treesitter:tree-sitter-log:4.1.0"
 
