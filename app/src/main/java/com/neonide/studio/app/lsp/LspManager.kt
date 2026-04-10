@@ -4,6 +4,7 @@ import android.net.LocalSocket
 import android.net.LocalSocketAddress
 import android.util.Log
 import com.neonide.studio.app.lsp.server.JavaLanguageServerService
+import com.neonide.studio.shared.termux.TermuxConstants
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.jsonrpc.Launcher
@@ -107,7 +108,7 @@ class LspManager {
         // org.javacs requires a valid workspace root URI. If it's missing/invalid,
         // it won't be able to create the compiler and may appear to "never start".
         // We default to Termux HOME here.
-        val rootPath = com.neonide.studio.shared.termux.TermuxConstants.TERMUX_HOME_DIR_PATH
+        val rootPath = TermuxConstants.TERMUX_HOME_DIR_PATH
 
         // Ensure proper file:// URI
         params.rootUri = java.io.File(rootPath).toURI().toASCIIString()
