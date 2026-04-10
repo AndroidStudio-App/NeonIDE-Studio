@@ -10,7 +10,7 @@
     "renovate"
   ],
   "platformAutomerge": true,
-  "automergeType": "pr"
+  "automergeType": "pr",
   "packageRules": [
     {
       "description": "Automerge ALL updates immediately",
