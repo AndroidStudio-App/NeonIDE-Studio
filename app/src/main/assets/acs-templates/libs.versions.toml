@@ -221,7 +221,7 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 protobuf = { id = "com.google.protobuf", version = "0.9.4" }
 benchmark = { id = "androidx.benchmark", version.ref = "benchmark" }
-detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.6" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.8" }
 com-github-jk1-tcdeps = { id = "com.github.jk1.tcdeps", version = "1.6.2" }
 com-jaredsburrows-license = { id = "com.jaredsburrows.license", version = "0.9.8" }
-io-gitlab-arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.22.0" }
+io-gitlab-arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.8" }
