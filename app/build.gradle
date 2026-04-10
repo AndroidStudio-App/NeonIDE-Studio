@@ -141,7 +141,7 @@ dependencies {
         // Avoid duplicate class with com.google.guava:listenablefuture:1.0
         exclude group: 'com.google.guava', module: 'listenablefuture'
     }
-    implementation 'commons-io:commons-io:2.5'
+    implementation 'commons-io:commons-io:2.21.0'
     implementation 'io.noties.markwon:core:' + project.properties.markwonVersion
     implementation 'io.noties.markwon:ext-strikethrough:' + project.properties.markwonVersion
     implementation 'io.noties.markwon:linkify:' + project.properties.markwonVersion
