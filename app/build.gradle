@@ -157,7 +157,7 @@ dependencies {
     implementation "androidx.collection:collection:1.6.0"
     implementation "com.google.code.gson:gson:2.13.2"
     implementation "org.jruby.jcodings:jcodings:1.0.63"
-    implementation "org.jruby.joni:joni:2.2.6"
+    implementation "org.jruby.joni:joni:2.2.7"
     implementation "org.snakeyaml:snakeyaml-engine:3.0.1"
     implementation "com.squareup.moshi:moshi:1.15.2"
     implementation "org.eclipse.jdt:org.eclipse.jdt.annotation:2.4.100"
