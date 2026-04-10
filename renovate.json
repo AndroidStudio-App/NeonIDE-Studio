@@ -13,9 +13,11 @@
   "packageRules": [
     {
       "description": "Automerge ALL updates immediately",
-      "matchPackagePatterns": ["*"],
       "matchUpdateTypes": ["minor", "patch"],
-      "automerge": true
+      "automerge": true,
+      "matchPackageNames": [
+        "*"
+      ]
     }
   ]
 }
