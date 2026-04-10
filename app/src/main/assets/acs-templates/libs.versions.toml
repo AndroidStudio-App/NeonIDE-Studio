@@ -140,7 +140,7 @@ asm = { module = "org.ow2.asm:asm", version = "9.7.1" }
 # AAPT2
 aapt2-common = { module = "com.android.tools:common", version = "31.4.1" }
 aapt2-annotations = { module = "com.android.tools:annotations", version = "31.2.2" }
-aapt2-jb-annotations = { module = "org.jetbrains:annotations", version = "24.1.0" }
+aapt2-jb-annotations = { module = "org.jetbrains:annotations", version = "26.1.0" }
 aapt2-proto = { module = "com.android.tools.build:aapt2-proto", version = "8.3.0-10880808" }
 
 # use logback-core from logback-android instead
@@ -153,7 +153,7 @@ xml-xercesImpl = { module = "xerces:xercesImpl", version = "2.12.2" }
 xml-apis = { module = "xml-apis:xml-apis", version = "2.0.2" }
 xml-remark = { module = "com.kotcrab.remark:remark", version = "1.2.0" }
 xml-resolver = { module = "xml-resolver:xml-resolver", version = "1.2" }
-xml-jb-annotations = { module = "org.jetbrains:annotations", version = "24.1.0" }
+xml-jb-annotations = { module = "org.jetbrains:annotations", version = "26.1.0" }
 
 # GIT
 git-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version = "6.8.0.202311291450-r" }
