@@ -169,7 +169,7 @@ dependencies {
     // Tree-sitter bindings + languages (from Maven Central)
     // https://github.com/AndroidIDEOfficial/android-tree-sitter
     implementation "com.itsaky.androidide.treesitter:android-tree-sitter:4.1.0"
-    implementation "com.itsaky.androidide.treesitter:tree-sitter-java:4.1.0"
+    implementation "com.itsaky.androidide.treesitter:tree-sitter-java:4.3.2"
     implementation "com.itsaky.androidide.treesitter:tree-sitter-kotlin:4.1.0"
     implementation "com.itsaky.androidide.treesitter:tree-sitter-xml:4.1.0"
     implementation "com.itsaky.androidide.treesitter:tree-sitter-json:4.1.0"
