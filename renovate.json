@@ -15,7 +15,7 @@
     {
       "description": "Automerge ALL updates immediately",
       "matchPackagePatterns": ["*"],
-      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest", "lockFileMaintenance"],
+      "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     }
   ],
