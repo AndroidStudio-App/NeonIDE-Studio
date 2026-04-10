@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.2"
+agp = "9.1.0"
 agp-tooling = "9.1.0"
 gradle-tooling = "8.9"
 # gradle-tooling = "v1.0-t2"
