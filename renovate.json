@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended",
     "schedule:automergeDaily",
-    ":dependencyDashboard"
+    "dependencyDashboard"
   ],
   "labels": [
     "dependencies",
@@ -18,9 +18,5 @@
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     }
-  ],
-  "lockFileMaintenance": {
-    "enabled": true,
-    "automerge": true
-  }
+  ]
 }
