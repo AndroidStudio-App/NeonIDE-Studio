@@ -86,7 +86,10 @@ class WorkSpaceApplyEditEvent : EventListener {
         val editor = project.getEditor(uri)
             ?: throw LSPException("The url ${textDocument.uri} is not opened.")
 
-        applySingleChange(editor, uri, textDocumentEdit.edits)
+        val textEdits = textDocumentEdit.edits.map {
+            if (it.isLeft) it.left else throw LSPException("SnippetTextEdit is not supported.")
+        }
+        applySingleChange(editor, uri, textEdits)
 
     }
 

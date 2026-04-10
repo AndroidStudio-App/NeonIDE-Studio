@@ -1,7 +1,6 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android") version "2.3.20"
-    id("org.jetbrains.kotlin.plugin.compose") version "2.3.20"
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.compose.compiler)
 }
 
 configurations.all {
@@ -22,7 +21,6 @@ def bootstrapZipSize = bootstrapZipFile.exists() ? bootstrapZipFile.length() : -
 
 android {
     ndkVersion '28.2.13676358'
-    buildToolsVersion '35.0.1'
     namespace 'com.neonide.studio'
     compileSdk 36
     
@@ -72,7 +70,7 @@ android {
         release {
             minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             minifyEnabled false
@@ -91,13 +89,6 @@ android {
         ndkBuild {
             path 'src/main/cpp/Android.mk'
         }
-    }
-
-    kotlinOptions {
-        jvmTarget = '17'
-        freeCompilerArgs += [
-            '-Xjvm-default=all'
-        ]
     }
 
     composeOptions {
@@ -336,6 +327,13 @@ tasks.register('cleanNativeIfBootstrapChanged') {
         }
         stateFile.parentFile.mkdirs()
         stateFile.text = currentSha + "\n"
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        freeCompilerArgs.add('-Xjvm-default=all')
     }
 }
 

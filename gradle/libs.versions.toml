@@ -1,5 +1,6 @@
 [versions]
 agp = "9.1.0"
+kotlin = "2.3.20"
 core = "1.18.0"
 appcompat = "1.7.1"
 material = "1.13.0"
@@ -8,6 +9,8 @@ constraintlayout = "2.2.1"
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
 [libraries]
 androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }

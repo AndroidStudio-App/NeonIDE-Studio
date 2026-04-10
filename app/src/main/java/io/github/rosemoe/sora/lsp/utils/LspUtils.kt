@@ -162,7 +162,10 @@ internal fun List<Diagnostic>.transformToEditorDiagnostics(editor: CodeEditor): 
             diagnosticSource.severity.toEditorLevel(),
             id++,
             DiagnosticDetail(
-                diagnosticSource.severity.name, diagnosticSource.message, null, diagnosticSource
+                diagnosticSource.severity.name,
+                diagnosticSource.message?.let { if (it.isLeft) it.left else it.right.value },
+                null,
+                diagnosticSource
             )
         )
         result.add(diagnostic)
