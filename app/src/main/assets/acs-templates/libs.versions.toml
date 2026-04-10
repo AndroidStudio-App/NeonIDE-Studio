@@ -135,7 +135,7 @@ google-java-format = { module = "com.google.googlejavaformat:google-java-format"
 google-flexbox = { module = "com.google.android.flexbox:flexbox", version = "3.0.0" }
 
 # Bytecode utilities
-asm = { module = "org.ow2.asm:asm", version = "9.7.1" }
+asm = { module = "org.ow2.asm:asm", version = "9.9.1" }
 
 # AAPT2
 aapt2-common = { module = "com.android.tools:common", version = "31.4.1" }
