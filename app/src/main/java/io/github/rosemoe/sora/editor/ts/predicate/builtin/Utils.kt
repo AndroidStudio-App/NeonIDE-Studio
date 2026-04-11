@@ -52,9 +52,17 @@ fun getCaptureContent(
     captureName: String,
     text: CharSequence
 ) = match.captures.filter { tsQuery.getCaptureNameForId(it.index) == captureName }
-    .map {
+    .mapNotNull {
         val start = it.node.startByte / 2
         val end = it.node.endByte / 2
+        
+        // Validate bounds to prevent StringIndexOutOfBoundsException
+        // when Tree-sitter nodes become stale after text edits
+        val textLength = text.length
+        if (start < 0 || end < 0 || start > textLength || end > textLength || start > end) {
+            return@mapNotNull null
+        }
+        
         when (text) {
             is UTF16String -> {
                 text.subseqChars(start, end).use {

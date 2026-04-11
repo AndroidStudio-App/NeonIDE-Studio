@@ -479,18 +479,12 @@ class SoraEditorActivityK : AppCompatActivity() {
         // Allow launching the editor with a specific project directory
         projectRoot = intent.getStringExtra(EXTRA_PROJECT_DIR)?.let { File(it) }
 
-        // Defer heavy setup to background thread to avoid blocking UI
-        uiScope.launch(Dispatchers.IO) {
-            // Load themes/grammars in background
-            setupTextmate()
-            setupMonarch()
+        // Load themes/grammars
+        setupTextmate()
+        setupMonarch()
+        ensureTextmateTheme()
 
-            withContext(Dispatchers.Main) {
-                ensureTextmateTheme()
-            }
-        }
-
-        // Load sample file asynchronously
+        // Load sample file asynchronously (file I/O is heavy)
         uiScope.launch(Dispatchers.IO) {
             try {
                 openAssetsFile("samples/sample.java")
@@ -505,15 +499,12 @@ class SoraEditorActivityK : AppCompatActivity() {
             if (f.exists()) bottomSheetVm.setIdeLogs(f.readText())
         }
 
-        // Setup file tree asynchronously
-        uiScope.launch(Dispatchers.IO) {
-            setupFileTree(projectRoot)
-            withContext(Dispatchers.Main) {
-                updatePositionText()
-                updateBtnState()
-                switchThemeIfRequired()
-            }
-        }
+        // Setup file tree (must run on main thread - creates views)
+        setupFileTree(projectRoot)
+
+        updatePositionText()
+        updateBtnState()
+        switchThemeIfRequired()
 
         // LSP diagnostics UI is handled by editor-lsp (see PublishDiagnosticsEvent)
         // and shown via CodeEditor diagnostics tooltip.
