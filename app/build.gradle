@@ -145,20 +145,35 @@ dependencies {
     // Java -> XHTML syntax highlighting (for preview/export)
     implementation "org.codelibs:jhighlight:2.0.0"
 
-    // --- Sora Editor Integrated Code Dependencies ---
-    implementation "androidx.collection:collection:1.6.0"
-    implementation "com.google.code.gson:gson:2.13.2"
-    implementation "org.jruby.jcodings:jcodings:1.0.64"
-    implementation "org.jruby.joni:joni:2.2.7"
-    implementation "org.snakeyaml:snakeyaml-engine:3.0.1"
-    implementation "com.squareup.moshi:moshi:1.15.2"
-    implementation "org.eclipse.jdt:org.eclipse.jdt.annotation:2.4.100"
-    implementation "io.github.dingyi222666.monarch:monarch:1.0.3"
-    implementation "io.github.dingyi222666.monarch:monarch-json-loader:1.0.2"
-    implementation "io.github.dingyi222666.regex-lib:regex-lib-oniguruma:1.0.3"
-    implementation "io.github.dingyi222666.regex-lib:regex-lib-re2j:1.0.2"
+    // --- Sora Editor (Maven) ---
+    // BOM - Manages versions for all sora-editor modules
+    implementation platform('io.github.rosemoe:editor-bom:0.24.4')
 
-    // Tree-sitter bindings + languages (from Maven Central)
+    // Core editor (replaces all embedded io.github.rosemoe.sora.* source)
+    implementation 'io.github.rosemoe:editor'
+
+    // Language support modules
+    implementation 'io.github.rosemoe:language-java'
+    implementation 'io.github.rosemoe:language-textmate'
+    implementation 'io.github.rosemoe:language-treesitter'
+    implementation 'io.github.rosemoe:language-monarch'
+
+    // Native regex engine for TextMate (replaces embedded Oniguruma C code)
+    implementation 'io.github.rosemoe:oniguruma-native'
+
+    // LSP support (requires minSdk 26+; we use reflection-based factory for API 23)
+    implementation 'io.github.rosemoe:editor-lsp'
+    
+    // LSP4J (needed by embedded LSP utils that reference org.eclipse.lsp4j directly)
+    implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0'
+    
+    // Gson (used by embedded Monarch/TextMate code)
+    implementation 'com.google.code.gson:gson:2.13.2'
+    
+    // Monarch language definitions (used by app's MonarchGrammarRegistry loading)
+    implementation 'io.github.dingyi222666.monarch:monarch-language-pack:1.0.2'
+
+    // Tree-sitter language bindings (separate from Sora's treesitter module)
     // https://github.com/AndroidIDEOfficial/android-tree-sitter
     implementation "com.itsaky.androidide.treesitter:android-tree-sitter:4.3.2"
     implementation "com.itsaky.androidide.treesitter:tree-sitter-java:4.3.2"
@@ -175,81 +190,13 @@ dependencies {
     // Required by android-tree-sitter (Java annotation processor generating headers).
     annotationProcessor "com.squareup:javapoet:1.13.0"
 
-    // Monarch language definitions (demo)
-    implementation "io.github.dingyi222666.monarch:monarch-language-pack:1.0.2"
-
-    // LSP demo (needed in app code; editor-lsp doesn't expose it via api)
-    implementation "org.eclipse.lsp4j:org.eclipse.lsp4j:1.0.0"
-
-    // Coroutines (used by LSP demo & async loading)
+    // Coroutines (used by LSP & async loading)
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
 
     // Local jars for demo language server(s)
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
-}
-
-tasks.register('setupOniguruma') {
-    def onigDir = new File(projectDir, 'src/main/cpp/oniguruma/oniguruma')
-    def onigZip = new File(buildDir, 'oniguruma.zip')
-    def zipRoot = 'oniguruma-6.9.10'
-
-    // Setup config.h for Android NDK build
-    def configFile = new File(onigDir, 'src/config.h')
-
-    outputs.dir onigDir
-    outputs.file configFile
-
-    doLast {
-        if (!onigDir.exists() || !new File(onigDir, 'src/oniguruma.h').exists()) {
-            logger.quiet("Downloading and extracting Oniguruma...")
-            onigZip.parentFile.mkdirs()
-            new URL('https://github.com/kkos/oniguruma/archive/refs/tags/v6.9.10.zip').withInputStream { i ->
-                onigZip.withOutputStream { it << i }
-            }
-            project.copy {
-                from zipTree(onigZip)
-                into onigDir.parentFile
-            }
-
-            def extractedDir = new File(onigDir.parentFile, zipRoot)
-            if (extractedDir.exists()) {
-                if (onigDir.exists()) onigDir.deleteDir()
-                extractedDir.renameTo(onigDir)
-            }
-
-            onigZip.delete()
-        }
-        
-        if (!configFile.exists())
-        logger.quiet("Generating config.h for Android NDK...")
-        configFile.parentFile.mkdirs()
-        configFile.text = """/* config.h for Android NDK build (arm64-v8a) */
-#ifndef CONFIG_H
-#define CONFIG_H
-
-#define HAVE_ALLOCA 1
-#define HAVE_ALLOCA_H 1
-#define HAVE_STDINT_H 1
-#define HAVE_SYS_TIME_H 1
-#define HAVE_SYS_TYPES_H 1
-#define HAVE_UNISTD_H 1
-#define HAVE_INTTYPES_H 1
-#define SIZEOF_INT 4
-#define SIZEOF_LONG 8
-#define SIZEOF_LONG_LONG 8
-#define SIZEOF_VOIDP 8
-
-/* Disable features not needed on Android */
-#undef USE_CRNL_AS_LINE_TERMINATOR
-#undef CRAY_STACKSEG_END
-#undef C_ALLOCA
-
-#endif /* CONFIG_H */
-"""
-        
-    }
 }
 
 tasks.register('downloadBootstrapZip'){
@@ -337,7 +284,6 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
     }
 }
 
-preBuild.dependsOn tasks.named('setupOniguruma')
 preBuild.dependsOn tasks.named('downloadBootstrapZip')
 preBuild.dependsOn tasks.named('generateBootstrapStamp')
 preBuild.dependsOn tasks.named('generateDebugKeystore')

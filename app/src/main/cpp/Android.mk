@@ -35,22 +35,5 @@ LOCAL_CFLAGS += $(TERMUX_COMMON_CFLAGS)
 LOCAL_LDFLAGS += $(TERMUX_COMMON_LDFLAGS)
 include $(BUILD_SHARED_LIBRARY)
 
-# libonig
-include $(CLEAR_VARS)
-LOCAL_MODULE := libonig
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/oniguruma/oniguruma/src
-FILE_LIST := $(wildcard $(LOCAL_PATH)/oniguruma/oniguruma/src/*.c)
-EXCLUDE_LIST := %/unicode_fold_data.c %/unicode_property_data.c %/unicode_property_data_posix.c %/unicode_wb_data.c %/unicode_egcb_data.c
-LOCAL_SRC_FILES := $(filter-out $(EXCLUDE_LIST), $(FILE_LIST:$(LOCAL_PATH)/%=%))
-LOCAL_CFLAGS := -O2 -Wno-unused-parameter -Wno-sign-compare -DHAVE_CONFIG_H
-include $(BUILD_STATIC_LIBRARY)
-
-# oniguruma-binding
-include $(CLEAR_VARS)
-LOCAL_MODULE := oniguruma-binding
-LOCAL_SRC_FILES := oniguruma/binding.cpp
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/oniguruma/oniguruma/src
-LOCAL_STATIC_LIBRARIES := libonig
-LOCAL_LDLIBS := -llog -lc++
-LOCAL_CPPFLAGS := -std=c++17
-include $(BUILD_SHARED_LIBRARY)
+# Oniguruma is now provided by Maven artifact (io.github.rosemoe:oniguruma-native)
+# Removed: libonig and oniguruma-binding targets

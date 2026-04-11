@@ -32,7 +32,6 @@ import com.neonide.studio.R
 import com.neonide.studio.shared.termux.TermuxConstants
 import com.neonide.studio.app.bottomsheet.model.BottomSheetViewModel
 import com.neonide.studio.app.bottomsheet.EditorBottomSheetTabAdapter
-import com.neonide.studio.app.lsp.LspClient
 import com.neonide.studio.app.buildoutput.BuildOutputBuffer
 import com.neonide.studio.app.editor.SoraLanguageProvider
 import com.neonide.studio.app.bottomsheet.model.NavigationItem
@@ -55,8 +54,6 @@ import com.itsaky.androidide.treesitter.TreeSitter
 import com.itsaky.androidide.treesitter.java.TSLanguageJava
 import com.itsaky.androidide.treesitter.kotlin.TSLanguageKotlin
 import com.itsaky.androidide.treesitter.xml.TSLanguageXml
-import io.github.rosemoe.sora.editor.ts.TsLanguage
-import io.github.rosemoe.sora.editor.ts.TsLanguageSpec
 import io.github.rosemoe.sora.langs.monarch.MonarchLanguage
 import io.github.rosemoe.sora.langs.monarch.registry.MonarchGrammarRegistry
 import io.github.rosemoe.sora.langs.monarch.registry.ThemeRegistry as MonarchThemeRegistry
@@ -128,7 +125,6 @@ class SoraEditorActivityK : AppCompatActivity() {
     private var isActivityVisible = false
 
     private val bottomSheetVm: BottomSheetViewModel by viewModels()
-    private val editorVm: EditorViewModel by viewModels()
 
     fun getProjectRootDir(): File? = projectRoot
 

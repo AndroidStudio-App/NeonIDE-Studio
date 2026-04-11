@@ -23,3 +23,12 @@
 
 # Keep LSP server bridge services (started by Intent and referenced by name in manifest).
 -keep class com.neonide.studio.app.lsp.server.** { *; }
+
+# --- Sora Editor (Maven) ---
+-keep class io.github.rosemoe.sora.** { *; }
+-keep class io.github.rosemoe.sora.langs.** { *; }
+-keep class io.github.rosemoe.sora.widget.** { *; }
+-keep class io.github.rosemoe.sora.text.** { *; }
+-keep class io.github.rosemoe.sora.lsp.** { *; }
+-keep class io.github.rosemoe.oniguruma.** { *; }
+-dontwarn io.github.rosemoe.**
