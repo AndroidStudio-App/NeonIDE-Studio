@@ -39,21 +39,35 @@ import io.github.rosemoe.sora.lsp.events.hover.hover
 import io.github.rosemoe.sora.lsp.events.inlayhint.inlayHint
 import io.github.rosemoe.sora.lsp.events.signature.signatureHelp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.DocumentDiagnosticReport
 
 private const val DIAGNOSTIC_QUERY_SOURCE = "sora.lsp.query"
 
+// Debounce delay in milliseconds - reduces LSP requests burst on fast typing
+private const val CONTENT_CHANGE_DEBOUNCE_MS = 200L
+
 
 class LspEditorContentChangeEvent(private val editor: LspEditor) :
     EventReceiver<ContentChangeEvent> {
+
+    @Volatile
+    private var debounceJob: Job? = null
+
     override fun onReceive(event: ContentChangeEvent, unsubscribe: Unsubscribe) {
         if (!editor.isConnected) {
             return
         }
 
+        // Cancel previous pending debounce to avoid firing on every keystroke
+        debounceJob?.cancel()
 
-        editor.coroutineScope.launch(Dispatchers.IO) {
+        debounceJob = editor.coroutineScope.launch(Dispatchers.IO) {
+            // Wait for typing to settle
+            delay(CONTENT_CHANGE_DEBOUNCE_MS)
+
             // send to server
             editor.eventManager.emitAsync(EventType.documentChange, event)
 
@@ -97,8 +111,6 @@ class LspEditorContentChangeEvent(private val editor: LspEditor) :
                 editor.onDiagnosticsUpdate()
             }
         }
-
-
     }
 }
 

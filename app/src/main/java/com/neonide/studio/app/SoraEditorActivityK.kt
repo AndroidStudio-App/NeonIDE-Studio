@@ -124,6 +124,9 @@ class SoraEditorActivityK : AppCompatActivity() {
     private var currentFile: File? = null
     private var projectRoot: File? = null
 
+    @Volatile
+    private var isActivityVisible = false
+
     private val bottomSheetVm: BottomSheetViewModel by viewModels()
     private val editorVm: EditorViewModel by viewModels()
 
@@ -476,13 +479,25 @@ class SoraEditorActivityK : AppCompatActivity() {
         // Allow launching the editor with a specific project directory
         projectRoot = intent.getStringExtra(EXTRA_PROJECT_DIR)?.let { File(it) }
 
-        // Load themes/grammars
-        setupTextmate()
-        setupMonarch()
-        ensureTextmateTheme()
+        // Defer heavy setup to background thread to avoid blocking UI
+        uiScope.launch(Dispatchers.IO) {
+            // Load themes/grammars in background
+            setupTextmate()
+            setupMonarch()
 
-        // Load sample (no LSP) - use Java sample to demonstrate Tree-sitter integration
-        openAssetsFile("samples/sample.java")
+            withContext(Dispatchers.Main) {
+                ensureTextmateTheme()
+            }
+        }
+
+        // Load sample file asynchronously
+        uiScope.launch(Dispatchers.IO) {
+            try {
+                openAssetsFile("samples/sample.java")
+            } catch (e: Exception) {
+                android.util.Log.e("SoraEditor", "Failed to load sample file", e)
+            }
+        }
 
         // Prefill IDE logs tab with crash log (if any)
         runCatching {
@@ -490,11 +505,15 @@ class SoraEditorActivityK : AppCompatActivity() {
             if (f.exists()) bottomSheetVm.setIdeLogs(f.readText())
         }
 
-        setupFileTree(projectRoot)
-
-        updatePositionText()
-        updateBtnState()
-        switchThemeIfRequired()
+        // Setup file tree asynchronously
+        uiScope.launch(Dispatchers.IO) {
+            setupFileTree(projectRoot)
+            withContext(Dispatchers.Main) {
+                updatePositionText()
+                updateBtnState()
+                switchThemeIfRequired()
+            }
+        }
 
         // LSP diagnostics UI is handled by editor-lsp (see PublishDiagnosticsEvent)
         // and shown via CodeEditor diagnostics tooltip.
@@ -519,6 +538,20 @@ class SoraEditorActivityK : AppCompatActivity() {
         }
 
         super.onBackPressed()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isActivityVisible = true
+        editor.isEnabled = true
+    }
+
+    override fun onPause() {
+        super.onPause()
+        isActivityVisible = false
+        // Disable editor to prevent input processing while activity is not visible
+        // This prevents lag when navigating back to the activity
+        editor.isEnabled = false
     }
 
     override fun onDestroy() {
@@ -2193,47 +2226,54 @@ class SoraEditorActivityK : AppCompatActivity() {
             refreshFileTreeSelectionHighlight()
         }
 
-        // Load file content
-        editor.setText(readFileText(file.absolutePath))
-        supportActionBar?.title = title
-
-        val ext = file.extension.lowercase()
-
-        val languageForEditor = languageProvider.getLanguage(file)
-
-        editor.setEditorLanguage(languageForEditor)
-
-        // Attach LSP by default for java/kotlin/xml
-        if (ext == "java" || ext == "kt" || ext == "kts" || ext == "xml") {
-            runCatching {
-                // For Java: attach with TsLanguage (or TextMate fallback)
-                lspController.attach(editor, file, languageForEditor, projectRoot)
+        // Load file content asynchronously to avoid blocking main thread on large files
+        uiScope.launch(Dispatchers.IO) {
+            val content = try {
+                readFileText(file.absolutePath)
+            } catch (e: Exception) {
+                android.util.Log.e("SoraEditor", "Failed to read file: ${file.name}", e)
+                ""
             }
-        } else {
-            runCatching { lspController.detach() }
-        }
 
-        // XML: load framework attribute index for ACS-like android:* completions
-        if (ext == "xml") {
-            // Ensure index is loaded asynchronously (heavy I/O)
-            uiScope.launch(Dispatchers.IO) {
-                val ok = com.neonide.studio.app.editor.xml.framework.AndroidFrameworkAttrIndex.ensureLoaded(this@SoraEditorActivityK)
-                if (ok) {
-                    // Inject provider into XML enhancer (raw names without "android:")
-                    // Snapshot to avoid allocating a new List on every completion request
-                    val snapshot = com.neonide.studio.app.editor.xml.framework.AndroidFrameworkAttrIndex.allAttrs().toList()
-                    com.neonide.studio.app.editor.xml.AndroidXmlLanguageEnhancer.setAndroidFrameworkAttrsProvider {
-                        snapshot
+            withContext(Dispatchers.Main) {
+                // Set editor text on main thread
+                editor.setText(content)
+                supportActionBar?.title = title
+
+                val ext = file.extension.lowercase()
+                val languageForEditor = languageProvider.getLanguage(file)
+                editor.setEditorLanguage(languageForEditor)
+
+                // Attach LSP by default for java/kotlin/xml
+                if (ext == "java" || ext == "kt" || ext == "kts" || ext == "xml") {
+                    runCatching {
+                        lspController.attach(editor, file, languageForEditor, projectRoot)
                     }
+                } else {
+                    runCatching { lspController.detach() }
                 }
-            }
-        } else {
-            // Not XML: clear provider to avoid unnecessary memory use
-            com.neonide.studio.app.editor.xml.AndroidXmlLanguageEnhancer.setAndroidFrameworkAttrsProvider(null)
-        }
 
-        updatePositionText()
-        updateBtnState()
+                // XML: load framework attribute index for ACS-like android:* completions
+                if (ext == "xml") {
+                    // Ensure index is loaded asynchronously (heavy I/O)
+                    launch(Dispatchers.IO) {
+                        val ok = com.neonide.studio.app.editor.xml.framework.AndroidFrameworkAttrIndex.ensureLoaded(this@SoraEditorActivityK)
+                        if (ok) {
+                            val snapshot = com.neonide.studio.app.editor.xml.framework.AndroidFrameworkAttrIndex.allAttrs().toList()
+                            com.neonide.studio.app.editor.xml.AndroidXmlLanguageEnhancer.setAndroidFrameworkAttrsProvider {
+                                snapshot
+                            }
+                        }
+                    }
+                } else {
+                    // Not XML: clear provider to avoid unnecessary memory use
+                    com.neonide.studio.app.editor.xml.AndroidXmlLanguageEnhancer.setAndroidFrameworkAttrsProvider(null)
+                }
+
+                updatePositionText()
+                updateBtnState()
+            }
+        }
     }
 
     private fun readFileText(absolutePath: String): String {

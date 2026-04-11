@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.DidChangeConfigurationParams
@@ -40,7 +41,8 @@ import java.io.IOException
  */
 class SoraEditorLspController(private val context: android.content.Context) : EditorLspController {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    // Use IO dispatcher for LSP operations to avoid blocking main thread
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     companion object {
         private const val TAG = "SoraEditorLsp"
@@ -355,21 +357,24 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
                 val deadlineMs = System.currentTimeMillis() + 30000L
                 var lastErr: IOException? = null
 
-                while (System.currentTimeMillis() < deadlineMs) {
-                    try {
-                        socket = LocalSocket()
-                        socket.connect(
-                            LocalSocketAddress(socketName, LocalSocketAddress.Namespace.ABSTRACT)
-                        )
-                        _inputStream = socket.inputStream
-                        _outputStream = socket.outputStream
-                        return
-                    } catch (e: IOException) {
-                        lastErr = e
+                // Use kotlinx.coroutines delay instead of Thread.sleep for non-blocking wait
+                kotlinx.coroutines.runBlocking {
+                    while (System.currentTimeMillis() < deadlineMs) {
                         try {
-                            Thread.sleep(100)
-                        } catch (_: InterruptedException) {
-                            break
+                            socket = LocalSocket()
+                            socket.connect(
+                                LocalSocketAddress(socketName, LocalSocketAddress.Namespace.ABSTRACT)
+                            )
+                            _inputStream = socket.inputStream
+                            _outputStream = socket.outputStream
+                            return@runBlocking
+                        } catch (e: IOException) {
+                            lastErr = e
+                            try {
+                                delay(100) // Non-blocking delay
+                            } catch (_: InterruptedException) {
+                                break
+                            }
                         }
                     }
                 }

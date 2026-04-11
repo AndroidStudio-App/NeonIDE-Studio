@@ -277,9 +277,14 @@ class LspEditor(
         }.isSuccess
     }
 
+    /**
+     * Blocking connect - MUST NOT be called from main thread.
+     * @throws IllegalStateException if called from main thread
+     */
     @WorkerThread
-    fun connectBlocking(throwException: Boolean = true): Boolean = runBlocking {
-        connect(throwException)
+    fun connectBlocking(throwException: Boolean = true): Boolean {
+        check(android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) { "connectBlocking must not be called from main thread" }
+        return runBlocking { connect(throwException) }
     }
 
     /**
@@ -317,9 +322,13 @@ class LspEditor(
 
     }
 
+    /**
+     * Blocking connect with retries - MUST NOT be called from main thread.
+     */
     @WorkerThread
-    fun connectWithTimeoutBlocking() = runBlocking {
-        connectWithTimeout()
+    fun connectWithTimeoutBlocking() {
+        check(android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) { "connectWithTimeoutBlocking must not be called from main thread" }
+        runBlocking { connectWithTimeout() }
     }
 
     /**
@@ -350,9 +359,13 @@ class LspEditor(
         eventManager.emitAsync(EventType.documentOpen)
     }
 
+    /**
+     * Blocking document open - MUST NOT be called from main thread.
+     */
     @WorkerThread
-    fun openDocumentBlocking() = runBlocking {
-        openDocument()
+    fun openDocumentBlocking() {
+        check(android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) { "openDocumentBlocking must not be called from main thread" }
+        runBlocking { openDocument() }
     }
 
     /**
@@ -362,9 +375,13 @@ class LspEditor(
         eventManager.emitAsync(EventType.documentSave)
     }
 
+    /**
+     * Blocking document save - MUST NOT be called from main thread.
+     */
     @WorkerThread
-    fun saveDocumentBlocking() = runBlocking {
-        saveDocument()
+    fun saveDocumentBlocking() {
+        check(android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) { "saveDocumentBlocking must not be called from main thread" }
+        runBlocking { saveDocument() }
     }
 
     fun onDiagnosticsUpdate() {

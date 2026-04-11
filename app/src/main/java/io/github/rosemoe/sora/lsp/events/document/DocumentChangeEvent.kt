@@ -33,12 +33,15 @@ import io.github.rosemoe.sora.lsp.events.getByClass
 import io.github.rosemoe.sora.lsp.utils.createDidChangeTextDocumentParams
 import io.github.rosemoe.sora.lsp.utils.createRange
 import io.github.rosemoe.sora.lsp.utils.createTextDocumentContentChangeEvent
+import io.github.rosemoe.sora.lsp.requests.Timeout
+import io.github.rosemoe.sora.lsp.requests.Timeouts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.DidChangeTextDocumentParams
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent
 import org.eclipse.lsp4j.TextDocumentSyncKind
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 class DocumentChangeEvent : AsyncEventListener() {
     override val eventName = EventType.documentChange
@@ -58,8 +61,17 @@ class DocumentChangeEvent : AsyncEventListener() {
                 )
             }
 
+            // Add timeout to prevent indefinite blocking if LSP server is unresponsive
             withContext(Dispatchers.IO) {
-                future?.get()
+                try {
+                    future?.get(Timeout[Timeouts.WILLSAVE].toLong(), TimeUnit.MILLISECONDS)
+                } catch (e: java.util.concurrent.TimeoutException) {
+                    // Timeout - cancel the request and continue
+                    future?.cancel(true)
+                    android.util.Log.w("DocumentChangeEvent", "Document change timed out")
+                } catch (e: Exception) {
+                    android.util.Log.w("DocumentChangeEvent", "Document change failed", e)
+                }
             }
 
         }
