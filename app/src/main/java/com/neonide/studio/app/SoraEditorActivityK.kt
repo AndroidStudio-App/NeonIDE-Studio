@@ -1928,13 +1928,15 @@ class SoraEditorActivityK : AppCompatActivity() {
             return
         }
 
-        // Start a new terminal session that cd's into the target directory.
-        // We run: bash --login -c 'cd "<dir>" && exec bash --login'
-        // This sources profile files AND changes to the correct directory.
-        val bashPath = TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/bash"
-        val cdCommand = "cd \"${d.absolutePath}\" && exec $bashPath --login"
-        val fullCommand = "$bashPath --login -c '$cdCommand'"
+        // Fix npm/pip shebangs before opening terminal
+        fixGlobalPackageShebangs()
 
+        val bashPath = TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/bash"
+
+        // Start a new terminal session with the working directory set via EXTRA_WORKDIR.
+        // NOTE: Do NOT pass --login here, as bash's profile sourcing can override the
+        // working directory if any profile file contains `cd ~` or similar.
+        // The environment (PATH, PREFIX, etc.) is already set up by TermuxShellEnvironment.
         val executableUri = Uri.Builder()
             .scheme(TermuxConstants.TERMUX_APP.TERMUX_SERVICE.URI_SCHEME_SERVICE_EXECUTE)
             .path(bashPath)
@@ -1946,9 +1948,10 @@ class SoraEditorActivityK : AppCompatActivity() {
             TermuxConstants.TERMUX_APP.TERMUX_SERVICE.EXTRA_RUNNER,
             ExecutionCommand.Runner.TERMINAL_SESSION.getName()
         )
+        // Set working directory at the subprocess level (chdir before exec)
         execIntent.putExtra(
-            TermuxConstants.TERMUX_APP.TERMUX_SERVICE.EXTRA_ARGUMENTS,
-            "--login -c '$cdCommand'"
+            TermuxConstants.TERMUX_APP.TERMUX_SERVICE.EXTRA_WORKDIR,
+            d.absolutePath
         )
         // Use a new session and bring Termux UI to foreground
         execIntent.putExtra(
@@ -1970,6 +1973,58 @@ class SoraEditorActivityK : AppCompatActivity() {
         }
 
         runCatching { startActivity(Intent(this, TermuxActivity::class.java)) }
+    }
+
+    /**
+     * Patch hardcoded #!/usr/bin/env shebangs in npm global packages.
+     * On Android, /usr/bin/env doesn't exist, so scripts with #!/usr/bin/env node
+     * fail with "bad interpreter" error.
+     */
+    private fun fixGlobalPackageShebangs() {
+        val prefix = TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH
+        val nodeBin = "$prefix/node"
+
+        val binDir = java.io.File(prefix)
+        if (!binDir.exists()) return
+
+        binDir.listFiles()?.forEach { binFile ->
+            try {
+                val isSymlink = java.nio.file.Files.isSymbolicLink(binFile.toPath())
+                // Check if symlink pointing to .js file
+                val targetPath = if (isSymlink) binFile.canonicalPath else null
+                if (targetPath != null && targetPath.endsWith(".js")) {
+                    patchNodeShebang(targetPath, nodeBin)
+                } else if (!isSymlink && binFile.canRead()) {
+                    // Regular script - check first line
+                    val firstLine = binFile.bufferedReader().readLine()
+                    if (firstLine?.startsWith("#!/usr/bin/env") == true) {
+                        val content = binFile.readText()
+                        val patched = content.replaceFirst("#!/usr/bin/env", "#!$nodeBin")
+                            .replaceFirst("#!$nodeBin node", "#!$nodeBin")
+                        binFile.writeText(patched)
+                        android.util.Log.i("SoraEditor", "Patched shebang in ${binFile.name}")
+                    }
+                }
+            } catch (_: Exception) {
+                // Skip files we can't read/write
+            }
+        }
+    }
+
+    private fun patchNodeShebang(jsFilePath: String, nodePath: String) {
+        try {
+            val file = java.io.File(jsFilePath)
+            if (!file.canWrite()) return
+            val content = file.readText()
+            if (content.startsWith("#!/usr/bin/env")) {
+                val patched = content.replaceFirst("#!/usr/bin/env", "#!$nodePath")
+                    .replaceFirst("#!$nodePath node", "#!$nodePath")
+                file.writeText(patched)
+                android.util.Log.i("SoraEditor", "Patched shebang in $jsFilePath")
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("SoraEditor", "Failed to patch shebang in $jsFilePath", e)
+        }
     }
 
     /** Update backgrounds for currently visible nodes to reflect SELECTED_FILE_PATH. */
