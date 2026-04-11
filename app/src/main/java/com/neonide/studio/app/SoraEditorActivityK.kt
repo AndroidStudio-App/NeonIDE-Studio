@@ -1928,11 +1928,12 @@ class SoraEditorActivityK : AppCompatActivity() {
             return
         }
 
-        // Use "bash --login" to source .bash_profile/.profile/.bashrc so that
-        // PATH and other environment variables are properly configured.
-        // This ensures commands like `qwen` (installed via npm/pip/etc.) are found.
+        // Start a new terminal session that cd's into the target directory.
+        // We run: bash --login -c 'cd "<dir>" && exec bash --login'
+        // This sources profile files AND changes to the correct directory.
         val bashPath = TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/bash"
-        val loginShellCommand = "$bashPath --login"
+        val cdCommand = "cd \"${d.absolutePath}\" && exec $bashPath --login"
+        val fullCommand = "$bashPath --login -c '$cdCommand'"
 
         val executableUri = Uri.Builder()
             .scheme(TermuxConstants.TERMUX_APP.TERMUX_SERVICE.URI_SCHEME_SERVICE_EXECUTE)
@@ -1941,15 +1942,13 @@ class SoraEditorActivityK : AppCompatActivity() {
 
         val execIntent = Intent(TermuxConstants.TERMUX_APP.TERMUX_SERVICE.ACTION_SERVICE_EXECUTE, executableUri)
         execIntent.setClass(this, TermuxService::class.java)
-        execIntent.putExtra(TermuxConstants.TERMUX_APP.TERMUX_SERVICE.EXTRA_WORKDIR, d.absolutePath)
         execIntent.putExtra(
             TermuxConstants.TERMUX_APP.TERMUX_SERVICE.EXTRA_RUNNER,
             ExecutionCommand.Runner.TERMINAL_SESSION.getName()
         )
-        // Pass --login as argument to bash so it sources profile files
         execIntent.putExtra(
             TermuxConstants.TERMUX_APP.TERMUX_SERVICE.EXTRA_ARGUMENTS,
-            "--login"
+            "--login -c '$cdCommand'"
         )
         // Use a new session and bring Termux UI to foreground
         execIntent.putExtra(
