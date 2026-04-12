@@ -162,7 +162,7 @@ dependencies {
 
     // --- Sora Editor (Maven) ---
     // BOM - Manages versions for all sora-editor modules
-    implementation(platform("io.github.rosemoe:editor-bom:0.24.4"))
+    implementation(platform("io.github.rosemoe:editor-bom:0.24.5"))
 
     // Core editor (replaces all embedded io.github.rosemoe.sora.* source)
     implementation("io.github.rosemoe:editor")
