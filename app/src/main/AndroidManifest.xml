@@ -114,7 +114,7 @@
             android:documentLaunchMode="intoExisting" />
 
         <provider
-            android:name=".filepicker.TermuxDocumentsProvider"
+            android:name=".app.DocumentsProvider"
             android:authorities="${TERMUX_PACKAGE_NAME}.documents"
             android:exported="true"
             android:grantUriPermissions="true"
