@@ -209,7 +209,6 @@ class CloneRepositoryDialogFragment : DialogFragment() {
 
         dialog.setOnShowListener {
             dialog.window?.apply {
-                setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
                 setLayout(WindowManager.LayoutParams.MATCH_PARENT, (ctx.resources.displayMetrics.heightPixels * 0.95).toInt())
                 clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
                 clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM)

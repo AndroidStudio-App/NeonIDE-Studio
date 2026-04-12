@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.appbar.MaterialToolbar
@@ -506,25 +507,29 @@ class SoraEditorActivityK : AppCompatActivity() {
         // and shown via CodeEditor diagnostics tooltip.
 
         // LSP tree-sitter libs are heavy; do NOT load tree-sitter native libs automatically.
-    }
 
-    override fun onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START)
-            return
-        }
+        // Handle back press using the new OnBackPressedDispatcher API
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    return
+                }
 
-        // If bottom sheet is expanded, collapse it first (ACS-like behavior)
-        runCatching {
-            val sheet = findViewById<View>(R.id.acs_bottom_sheet)
-            val behavior = BottomSheetBehavior.from(sheet)
-            if (behavior.state == BottomSheetBehavior.STATE_EXPANDED || behavior.state == BottomSheetBehavior.STATE_HALF_EXPANDED) {
-                behavior.state = BottomSheetBehavior.STATE_COLLAPSED
-                return
+                // If bottom sheet is expanded, collapse it first (ACS-like behavior)
+                runCatching {
+                    val sheet = findViewById<View>(R.id.acs_bottom_sheet)
+                    val behavior = BottomSheetBehavior.from(sheet)
+                    if (behavior.state == BottomSheetBehavior.STATE_EXPANDED || behavior.state == BottomSheetBehavior.STATE_HALF_EXPANDED) {
+                        behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+                        return
+                    }
+                }
+
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
             }
-        }
-
-        super.onBackPressed()
+        })
     }
 
     override fun onResume() {
