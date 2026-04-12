@@ -436,7 +436,6 @@ class SoraEditorActivityK : AppCompatActivity() {
         editor.subscribeAlways(ContentChangeEvent::class.java) { ev ->
             editor.postDelayed({ updateBtnState() }, 50)
 
-            // --- Android XML editing enhancements (ACS-like) ---
             val f = currentFile
             if (f != null && f.extension.equals("xml", ignoreCase = true)) {
                 // 1) Advanced edit: typing '/' inside XML auto-completes tags (e.g., '</' -> '</TagName>')
@@ -516,7 +515,6 @@ class SoraEditorActivityK : AppCompatActivity() {
                     return
                 }
 
-                // If bottom sheet is expanded, collapse it first (ACS-like behavior)
                 runCatching {
                     val sheet = findViewById<View>(R.id.acs_bottom_sheet)
                     val behavior = BottomSheetBehavior.from(sheet)

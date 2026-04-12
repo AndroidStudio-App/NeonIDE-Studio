@@ -10,9 +10,7 @@ import java.io.File
 /**
  * Lazy, cached index of Android framework XML attributes.
  *
- * ACS uses a resource table + manifest tables. Here we approximate that by parsing
- * <sdk>/platforms/android-<api>/data/res/values/attrs.xml and extracting <attr name="...">.
- *
+ * 
  * This provides a very large attribute set (thousands) so typing "a" shows many android:* entries.
  */
 object AndroidFrameworkAttrIndex {

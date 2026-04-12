@@ -381,6 +381,7 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
             private lateinit var socket: LocalSocket
             private lateinit var _inputStream: java.io.InputStream
             private lateinit var _outputStream: java.io.OutputStream
+            private var _isClosed: Boolean = false
 
             override fun start() {
                 val startTime = System.currentTimeMillis()
@@ -428,7 +429,11 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
             override val outputStream: java.io.OutputStream
                 get() = _outputStream
 
+            override val isClosed: Boolean
+                get() = _isClosed || !socket.isConnected
+
             override fun close() {
+                _isClosed = true
                 runCatching { socket.close() }
             }
         }
