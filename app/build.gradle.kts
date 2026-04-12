@@ -180,7 +180,7 @@ dependencies {
     implementation("io.github.rosemoe:editor-lsp")
 
     // LSP4J (needed by embedded LSP utils that reference org.eclipse.lsp4j directly)
-    implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0")
+    implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:1.0.0")
 
     // Gson (used by embedded Monarch/TextMate code)
     implementation("com.google.code.gson:gson:2.13.2")
