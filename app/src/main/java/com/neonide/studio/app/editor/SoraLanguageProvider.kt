@@ -1,6 +1,7 @@
 package com.neonide.studio.app.editor
 
 import android.content.Context
+import com.neonide.studio.shared.logger.Logger
 import com.itsaky.androidide.treesitter.TreeSitter
 import com.itsaky.androidide.treesitter.java.TSLanguageJava
 import com.itsaky.androidide.treesitter.kotlin.TSLanguageKotlin
@@ -24,6 +25,8 @@ import com.neonide.studio.app.editor.completion.UnifiedCompletionProvider
 import com.neonide.studio.app.editor.xml.AndroidXmlLanguageEnhancer
 import java.io.File
 
+private const val TAG = "SoraLanguageProvider"
+
 class SoraLanguageProvider(private val context: Context) {
 
     private var treeSitterLoaded = false
@@ -35,18 +38,23 @@ class SoraLanguageProvider(private val context: Context) {
 
     fun getLanguage(file: File): Language {
         val base = baseProvider.getLanguage(file)
+        Logger.logDebug(TAG, "getLanguage(): file=${file.name}, ext=${file.extension}, baseType=${base::class.simpleName}")
 
         val enhanced = if (file.extension.equals("xml", ignoreCase = true)) {
+            Logger.logDebug(TAG, "getLanguage(): wrapping XML with AndroidXmlLanguageEnhancer")
             AndroidXmlLanguageEnhancer(base, file)
         } else {
             base
         }
 
-        return UnifiedCompletionProvider(enhanced, file)
+        val result = UnifiedCompletionProvider(enhanced, file)
+        Logger.logDebug(TAG, "getLanguage(): final type=${result::class.simpleName}")
+        return result
     }
 
     private fun createTreeSitterLanguage(type: String): Language? {
         return runCatching {
+            Logger.logDebug(TAG, "createTreeSitterLanguage: type=$type")
             when (type) {
                 "java" -> createJavaTreeSitterLanguage()
                 "kotlin" -> createKotlinTreeSitterLanguage()
@@ -60,6 +68,8 @@ class SoraLanguageProvider(private val context: Context) {
                 "aidl" -> createAidlTreeSitterLanguage()
                 else -> null
             }
+        }.onFailure { e ->
+            Logger.logStackTraceWithMessage(TAG, "createTreeSitterLanguage FAILED for type=$type", e)
         }.getOrNull()
     }
 
@@ -184,14 +194,18 @@ class SoraLanguageProvider(private val context: Context) {
 
         val highlights = readAssetText("tree-sitter-queries/xml/highlights.scm")
         val blocks = readAssetText("tree-sitter-queries/xml/blocks.scm")
-        val brackets = readAssetText("tree-sitter-queries/xml/brackets.scm")
+        // XML bracket matching is handled by AndroidXmlLanguageEnhancer, not tree-sitter brackets.
+        // Provide a minimal valid query using node types that exist in the XML grammar.
+        val brackets = "(empty_element \"<\" @editor.brackets.open \">\" @editor.brackets.close)"
+        // XML has no locals - use a minimal valid query.
+        val locals = "(comment) @local.scope"
 
         val spec = TsLanguageSpec(
             language = TSLanguageXml.getInstance(),
             highlightScmSource = highlights,
             codeBlocksScmSource = blocks,
             bracketsScmSource = brackets,
-            localsScmSource = "",
+            localsScmSource = locals,
         )
 
         return TsLanguage(spec, tab = true) {
@@ -417,8 +431,10 @@ class SoraLanguageProvider(private val context: Context) {
         if (treeSitterLoaded) return
         synchronized(this) {
             if (treeSitterLoaded) return
+            Logger.logDebug(TAG, "ensureTreeSitterLoaded: loading TreeSitter native library")
             TreeSitter.loadLibrary()
             treeSitterLoaded = true
+            Logger.logDebug(TAG, "ensureTreeSitterLoaded: TreeSitter loaded successfully")
         }
     }
 }

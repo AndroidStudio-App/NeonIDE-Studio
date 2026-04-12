@@ -926,12 +926,6 @@ public final class TermuxConstants {
         /** Termux app BuildConfig class name */
         public static final String BUILD_CONFIG_CLASS_NAME = TERMUX_PACKAGE_NAME + ".BuildConfig"; // Default: "com.neonide.studio.BuildConfig"
 
-        /** Termux app FileShareReceiverActivity class name */
-        public static final String FILE_SHARE_RECEIVER_ACTIVITY_CLASS_NAME = TERMUX_PACKAGE_NAME + ".app.api.file.FileShareReceiverActivity"; // Default: "com.neonide.studio.app.api.file.FileShareReceiverActivity"
-
-        /** Termux app FileViewReceiverActivity class name */
-        public static final String FILE_VIEW_RECEIVER_ACTIVITY_CLASS_NAME = TERMUX_PACKAGE_NAME + ".app.api.file.FileViewReceiverActivity"; // Default: "com.neonide.studio.app.api.file.FileViewReceiverActivity"
-
 
         /** Termux app core activity name. */
         public static final String TERMUX_ACTIVITY_NAME = TERMUX_PACKAGE_NAME + ".app.TermuxActivity"; // Default: "com.neonide.studio.app.TermuxActivity"

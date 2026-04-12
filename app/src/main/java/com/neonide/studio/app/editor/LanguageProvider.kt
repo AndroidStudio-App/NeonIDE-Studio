@@ -1,8 +1,11 @@
 package com.neonide.studio.app.editor
 
+import com.neonide.studio.shared.logger.Logger
 import io.github.rosemoe.sora.lang.EmptyLanguage
 import io.github.rosemoe.sora.lang.Language
 import java.io.File
+
+private const val TAG = "LanguageProvider"
 
 class LanguageProvider(
     private val tsFactory: (String) -> Language?,
@@ -10,7 +13,7 @@ class LanguageProvider(
 ) {
     fun getLanguage(file: File): Language {
         val ext = file.extension.lowercase()
-        return when (ext) {
+        val lang = when (ext) {
             "java" -> tsFactory("java") ?: tmFactory("java") ?: EmptyLanguage()
             "kt", "kts" -> tsFactory("kotlin") ?: tmFactory("kotlin") ?: EmptyLanguage()
             "xml" -> tsFactory("xml") ?: tmFactory("xml") ?: EmptyLanguage()
@@ -34,5 +37,7 @@ class LanguageProvider(
 
             else -> EmptyLanguage()
         }
+        Logger.logDebug(TAG, "getLanguage(): ext=$ext, resultType=${lang::class.simpleName}")
+        return lang
     }
 }

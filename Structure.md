@@ -177,12 +177,6 @@ NeonIDE-Studio/
 
 Terminal I/O preferences, Terminal View preferences, and debugging preferences for Termux and its plugin apps.
 
-### com.neonide.studio.app.api.file/
-
-| File | Purpose |
-|------|---------|
-| `FileReceiverActivity.java` | Handles SEND and VIEW intents for external file sharing into the IDE |
-
 ---
 
 ### com.neonide.studio.shared/ — Shared Utilities & Termux Integration

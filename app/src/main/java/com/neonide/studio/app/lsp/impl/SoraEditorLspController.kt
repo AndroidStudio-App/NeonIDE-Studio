@@ -62,23 +62,32 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
     private var currentFile: File? = null
 
     override fun attach(editor: CodeEditor, file: File, wrapperLanguage: Language, projectRoot: File?): Boolean {
+        Logger.logDebug(TAG, "=== attach() ENTER ===")
+        Logger.logDebug(TAG, "attach(): file=${file.absolutePath}")
+        Logger.logDebug(TAG, "attach(): projectRoot=${projectRoot?.absolutePath ?: "null"}")
+
         // Debug-friendly: fail fast if server doesn't initialize
         io.github.rosemoe.sora.lsp.requests.Timeout[io.github.rosemoe.sora.lsp.requests.Timeouts.INIT] = 10000
 
         val serverId = LspUtils.getServerId(file) ?: run {
+            Logger.logDebug(TAG, "attach(): no serverId for ${file.name}, detaching")
             detach()
             return false
         }
+        Logger.logDebug(TAG, "attach(): serverId=$serverId for ${file.name}")
 
         startServer(serverId)
 
         val desiredRoot = (projectRoot ?: file.parentFile ?: file).let { if (it.isFile) it.parentFile ?: it else it }
+        Logger.logDebug(TAG, "attach(): desiredRoot=${desiredRoot.absolutePath}")
 
         // If project root changed (user opened a file from a different project), recreate the LSP project
         // so servers get the correct workspace root.
         val p = project?.takeIf { it.projectUri.path == desiredRoot.absolutePath }
             ?: run {
+                Logger.logDebug(TAG, "attach(): creating new LspProject for $desiredRoot")
                 project?.let { old ->
+                    Logger.logDebug(TAG, "attach(): disposing old LspProject")
                     runCatching { old.dispose() }
                 }
                 createProject(desiredRoot).also { project = it }
@@ -100,23 +109,28 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
         detach()
 
         val lspEditor = try {
+            Logger.logDebug(TAG, "attach(): calling p.getOrCreateEditor(${file.absolutePath})")
             p.getOrCreateEditor(file.absolutePath)
         } catch (t: Throwable) {
             Logger.logStackTraceWithMessage(TAG, "Failed to create LSP editor for ${file.absolutePath}", t)
             return false
         }
 
+        Logger.logDebug(TAG, "attach(): LspEditor created, setting editor and wrapperLanguage")
         lspEditor.editor = editor
         lspEditor.wrapperLanguage = wrapperLanguage
 
         // Launch connection in background to avoid blocking main thread
         scope.launch {
+            Logger.logDebug(TAG, "attach(): coroutine launched for ${file.name}")
             try {
                 // Async connect
+                Logger.logDebug(TAG, "attach(): about to call lspEditor.connect(false) for ${file.name}")
                 val ok = withContext(Dispatchers.IO) {
-                    Logger.logDebug(TAG, "Connecting LSP for ${file.name}...")
+                    Logger.logDebug(TAG, "connect() running on IO dispatcher for ${file.name}")
                     lspEditor.connect(false)
                 }
+                Logger.logDebug(TAG, "attach(): lspEditor.connect returned $ok for ${file.name}")
                 if (ok) {
                     Logger.logInfo(TAG, "LSP connected for ${file.absolutePath} (serverId=$serverId)")
 
@@ -126,6 +140,7 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
 
                     current = lspEditor
                     currentFile = file
+                    Logger.logDebug(TAG, "attach(): LSP attach complete for ${file.name}")
                 } else {
                     Logger.logWarn(TAG, "LSP connect returned false for ${file.absolutePath}")
                     runCatching { lspEditor.dispose() }
@@ -136,6 +151,7 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
             }
         }
 
+        Logger.logDebug(TAG, "=== attach() EXIT (returning true, connect async) ===")
         return true
     }
 
@@ -300,12 +316,25 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
 
     private fun startServer(serverId: String) {
         val intent = when (serverId) {
-            JavaLanguageServer.SERVER_ID -> Intent(context, JavaLanguageServerService::class.java)
-            KotlinLanguageServer.SERVER_ID -> Intent(context, KotlinLanguageServerService::class.java)
-            XMLLanguageServer.SERVER_ID -> Intent(context, XmlLanguageServerService::class.java)
-            else -> return
+            JavaLanguageServer.SERVER_ID -> {
+                Logger.logDebug(TAG, "Starting JavaLanguageServerService")
+                Intent(context, JavaLanguageServerService::class.java)
+            }
+            KotlinLanguageServer.SERVER_ID -> {
+                Logger.logDebug(TAG, "Starting KotlinLanguageServerService")
+                Intent(context, KotlinLanguageServerService::class.java)
+            }
+            XMLLanguageServer.SERVER_ID -> {
+                Logger.logDebug(TAG, "Starting XmlLanguageServerService")
+                Intent(context, XmlLanguageServerService::class.java)
+            }
+            else -> {
+                Logger.logWarn(TAG, "Unknown server ID: $serverId")
+                return
+            }
         }
         context.startService(intent)
+        Logger.logDebug(TAG, "startService() called for $serverId")
     }
 
     private fun stopServers() {
@@ -354,31 +383,42 @@ class SoraEditorLspController(private val context: android.content.Context) : Ed
             private lateinit var _outputStream: java.io.OutputStream
 
             override fun start() {
-                val deadlineMs = System.currentTimeMillis() + 30000L
+                val startTime = System.currentTimeMillis()
+                val deadlineMs = startTime + 60000L
                 var lastErr: IOException? = null
+                var attempt = 0
 
-                // Use kotlinx.coroutines delay instead of Thread.sleep for non-blocking wait
-                kotlinx.coroutines.runBlocking {
-                    while (System.currentTimeMillis() < deadlineMs) {
-                        try {
-                            socket = LocalSocket()
-                            socket.connect(
-                                LocalSocketAddress(socketName, LocalSocketAddress.Namespace.ABSTRACT)
-                            )
-                            _inputStream = socket.inputStream
-                            _outputStream = socket.outputStream
-                            return@runBlocking
-                        } catch (e: IOException) {
-                            lastErr = e
-                            try {
-                                delay(100) // Non-blocking delay
-                            } catch (_: InterruptedException) {
-                                break
-                            }
-                        }
+                Logger.logDebug(TAG, "retryingLocalSocketProvider: STARTING, socket=$socketName, deadline=${deadlineMs}ms from now")
+
+                while (System.currentTimeMillis() < deadlineMs && !Thread.currentThread().isInterrupted) {
+                    attempt++
+                    val attemptStart = System.currentTimeMillis()
+                    try {
+                        Logger.logDebug(TAG, "retryingLocalSocketProvider: attempt $attempt to connect to $socketName")
+                        socket = LocalSocket()
+                        socket.connect(
+                            LocalSocketAddress(socketName, LocalSocketAddress.Namespace.ABSTRACT)
+                        )
+                        _inputStream = socket.inputStream
+                        _outputStream = socket.outputStream
+                        val elapsed = System.currentTimeMillis() - startTime
+                        Logger.logDebug(TAG, "retryingLocalSocketProvider: CONNECTED to $socketName (attempt $attempt, took ${elapsed}ms)")
+                        return
+                    } catch (e: IOException) {
+                        lastErr = e
+                        val elapsed = System.currentTimeMillis() - startTime
+                        Logger.logDebug(TAG, "retryingLocalSocketProvider: attempt $attempt FAILED (${e.message}), elapsed=${elapsed}ms, remaining=${deadlineMs - System.currentTimeMillis()}ms")
+                    }
+                    try {
+                        Thread.sleep(100)
+                    } catch (_: InterruptedException) {
+                        Logger.logDebug(TAG, "retryingLocalSocketProvider: interrupted during sleep")
+                        break
                     }
                 }
 
+                val totalTime = System.currentTimeMillis() - startTime
+                Logger.logError(TAG, "retryingLocalSocketProvider: FAILED to connect to $socketName after $attempt attempts (${totalTime}ms elapsed)")
                 throw lastErr ?: IOException("Failed to connect to local socket: $socketName")
             }
 

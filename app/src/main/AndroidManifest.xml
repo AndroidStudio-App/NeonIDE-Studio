@@ -113,41 +113,6 @@
             android:theme="@style/Theme.MarkdownViewActivity.DayNight"
             android:documentLaunchMode="intoExisting" />
 
-        <activity
-            android:name=".app.api.file.FileReceiverActivity"
-            android:excludeFromRecents="true"
-            android:exported="false"
-            android:noHistory="true"
-            android:resizeableActivity="true"
-            android:taskAffinity="${TERMUX_PACKAGE_NAME}.filereceiver"
-            tools:targetApi="n">
-        </activity>
-
-        <activity-alias
-            android:name=".app.api.file.FileShareReceiverActivity"
-            android:exported="true"
-            android:targetActivity=".app.api.file.FileReceiverActivity">
-
-            <!-- Accept multiple file types when sending. -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity-alias>
-
-        <activity-alias
-            android:name=".app.api.file.FileViewReceiverActivity"
-            android:exported="true"
-            android:targetActivity=".app.api.file.FileReceiverActivity">
-
-            <!-- Accept multiple file types to let Termux be usable as generic file viewer. -->
-            <intent-filter tools:ignore="AppLinkUrlError">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity-alias>
-
         <provider
             android:name=".filepicker.TermuxDocumentsProvider"
             android:authorities="${TERMUX_PACKAGE_NAME}.documents"

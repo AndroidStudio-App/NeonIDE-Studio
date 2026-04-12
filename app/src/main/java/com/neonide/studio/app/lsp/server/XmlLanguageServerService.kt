@@ -54,49 +54,57 @@ class XmlLanguageServerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Logger.logDebug(TAG, "Starting XML Language Server Service...")
+        Logger.logDebug(TAG, "onStartCommand received. Starting XML Language Server Service...")
         startServer()
         return START_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Logger.logDebug(TAG, "Stopping XML Language Server Service...")
+        Logger.logDebug(TAG, "onDestroy: Stopping XML Language Server Service...")
         stopServer()
     }
 
     private fun startServer() {
         if (serverThread?.isAlive == true) {
-            Logger.logDebug(TAG, "Server is already running.")
+            Logger.logDebug(TAG, "Server thread already running.")
             return
         }
+        Logger.logDebug(TAG, "startServer() called - launching server thread")
 
         serverThread = thread(name = "XmlLanguageServerThread") {
             try {
+                Logger.logDebug(TAG, "Server thread started")
                 val serverDir = setupServerDirectory()
+                Logger.logDebug(TAG, "Server directory ready: ${serverDir.absolutePath}")
                 val jarFile = File(serverDir, SERVER_JAR_NAME)
 
                 if (!jarFile.isFile) {
                     Logger.logError(TAG, "LemMinX jar not found: ${jarFile.absolutePath}")
+                    Logger.logError(TAG, "Server directory contents: ${serverDir.listFiles()?.map { it.name }?.joinToString(",") ?: "(empty)"}")
                     return@thread
                 }
+                Logger.logDebug(TAG, "LemMinX JAR found: ${jarFile.name} (${jarFile.length()} bytes)")
 
                 val termuxJava = File(TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH, "java")
                 val javaExecutable = if (termuxJava.exists()) termuxJava.absolutePath else "java"
+                Logger.logDebug(TAG, "Using Java executable: $javaExecutable")
+                Logger.logDebug(TAG, "Java exists: ${termuxJava.exists()}")
 
-                // Open local socket server once and accept sequential connections.
+                Logger.logDebug(TAG, "Opening LocalServerSocket at $SOCKET_NAME")
                 serverSocket = LocalServerSocket(SOCKET_NAME)
-                Logger.logDebug(TAG, "Server socket opened at $SOCKET_NAME")
+                Logger.logDebug(TAG, "Server socket opened successfully at $SOCKET_NAME")
 
                 while (!Thread.currentThread().isInterrupted) {
-                    Logger.logDebug(TAG, "Waiting for LSP client connection...")
+                    Logger.logDebug(TAG, "Accepting client connections on $SOCKET_NAME...")
                     val clientSocket = try {
                         serverSocket?.accept()
                     } catch (e: IOException) {
+                        Logger.logDebug(TAG, "accept() threw IOException: ${e.message}")
                         null
                     } ?: break
 
-                    Logger.logDebug(TAG, "Client connected.")
+                    Logger.logDebug(TAG, "Client connected! Starting LemMinX process...")
                     loggedClientPayload = false
                     loggedServerPayload = false
 
@@ -109,6 +117,8 @@ class XmlLanguageServerService : Service() {
                         jarFile.absolutePath
                     )
 
+                    Logger.logDebug(TAG, "Starting LemMinX with command: ${command.joinToString(" ")}")
+
                     val processBuilder = ProcessBuilder(command)
                     processBuilder.directory(serverDir)
 
@@ -116,8 +126,12 @@ class XmlLanguageServerService : Service() {
                     environment["HOME"] = TermuxConstants.TERMUX_HOME_DIR_PATH
                     environment["PATH"] = "${TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH}:${environment["PATH"]}"
 
+                    Logger.logDebug(TAG, "ProcessBuilder env HOME=${environment["HOME"]}, TERMUX_BIN=${TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH}")
+
                     process = try {
-                        processBuilder.start()
+                        val p = processBuilder.start()
+                        Logger.logDebug(TAG, "LemMinX process started")
+                        p
                     } catch (e: IOException) {
                         Logger.logStackTraceWithMessage(TAG, "Failed to start LemMinX process. Is openjdk installed in Termux?", e)
                         runCatching { clientSocket.close() }
